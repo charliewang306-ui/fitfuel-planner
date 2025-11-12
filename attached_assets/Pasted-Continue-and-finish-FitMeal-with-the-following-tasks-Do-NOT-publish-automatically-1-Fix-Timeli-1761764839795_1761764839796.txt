@@ -1,0 +1,50 @@
+Continue and finish FitMeal with the following tasks. Do NOT publish automatically.
+
+1) Fix Timeline countdown:
+   - Show “剩余 {h}小时{m}分” if reminderTime > now; “已超时 {h}小时{m}分” if past & not completed.
+   - Update every 60s. Respect local timezone and the user’s wake/sleep window.
+   - If a reminder slips >24h, move it to tomorrow automatically.
+   - Colors: upcoming=green, overdue=red, completed=gray. Completing stops the timer and updates dashboard remaining macros.
+
+2) Hydration upgrades:
+   - Daily target = weight(kg) × 0.7; adjust +20% for Muscle Gain, +10% for Fat Loss, +0% for Maintain. Training day +10% extra.
+   - Keep 4 quick buttons: +4oz, +8oz, +12oz, +16oz (toggle to ml).
+   - When reaching target: lock ring at 100%, show “+X oz 超额”, play a short celebration animation. Near-full: subtle shake.
+   - Move manual input below with label “其它容量？手动输入”.
+
+3) Food log UX:
+   - In add/edit food modal, support unit switch g ↔ oz ↔ kg (internal calc in grams) with instant kcal/P/F/C.
+   - Bilingual search (Chinese + English keywords). Keep local food names.
+
+4) Barcode page:
+   - Implement camera scanning and local barcode table lookup; if not found, open manual input/OCR placeholder.
+   - Free users: 3 scans/day → show PRO paywall after limit.
+
+5) Reminders:
+   - Each item can be edited (time & title), duplicated, or deleted. Add quick postpone +15/+30/+60.
+   - Respect vibration setting on trigger.
+
+6) Home layout:
+   - Move “今日剩余营养” card above the ring. Add mode pill on the target card (增肌/减脂/维持) with brief explanation.
+
+7) i18n & locale:
+   - On first launch, auto-detect `navigator.language` and pick locale (zh-CN/zh-TW/en). Fallback to en.
+   - Add “Language” selector in Settings to override and persist.
+   - Use the same locale to render dates/numbers.
+   - Extract all strings into /i18n/*.json.
+
+8) Support & legal:
+   - In Settings, add “帮助与支持” section with a button that opens the default mail client to support@<yourdomain> with subject auto-filled (app version, locale, device).
+   - Add links: Privacy Policy, Terms of Service, Restore Purchases at bottom of Settings and Paywall.
+
+9) Visual polish:
+   - Colors: primary #22C55E; gradients for progress bars (#16A34A → #4ADE80). Water uses #0EA5E9, fat #F97316, fiber #A855F7.
+   - Thicker rings, card radius lg, shadow sm, light glass blur. Tap animations on bottom tabs. Dark mode supported.
+
+10) PRO gating (final):
+   - Free: logging + hydration + daily 1x AI suggest + last 7 days history + 3 scans/day + top 100 foods.
+   - PRO: unlimited scans/AI/history/full database/custom reminder templates/training-day macro tilt.
+   - Paywall: 7-day free trial → $9.99/month, add second-confirm modal. Keep Restore Purchases.
+
+11) QA:
+   - Mobile-first tests for all pages. Fix any errors, then report “✅ All tasks completed successfully” with a short summary.

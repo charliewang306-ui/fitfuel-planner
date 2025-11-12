@@ -1,0 +1,48 @@
+{
+  "title": "타임라인",
+  "today": "오늘",
+  "reminders": "알림",
+  "noReminders": "오늘 알림이 없습니다",
+  "addReminder": "알림 추가",
+  "editReminder": "알림 편집",
+  "deleteReminder": "알림 삭제",
+  "time": "시간",
+  "status": {
+    "pending": "대기 중",
+    "completed": "완료",
+    "overdue": "지연",
+    "missed": "놓침",
+    "postponed": "연기됨",
+    "skipped": "건너뜀"
+  },
+  "countdown": {
+    "remaining": "남은 시간",
+    "overdue": "지연",
+    "hours": "{count}시간",
+    "minutes": "{count}분"
+  },
+  "postpone": {
+    "title": "연기",
+    "min15": "+15분",
+    "min30": "+30분",
+    "min60": "+60분"
+  },
+  "markCompleted": "완료로 표시",
+  "scheduledTime": "예정 시간",
+  "description": "설명",
+  "infoBanner": {
+    "title": "시간은 리듬이지 제약이 아닙니다",
+    "description": "알림을 놓치셨나요? 걱정 마세요! 언제든지 나중에 기록할 수 있습니다. 우리는 엄격한 시간이 아닌 하루 전체의 영양 섭취량에 초점을 맞춥니다. 건강한 습관은 유연하고 지속 가능해야 합니다. 알림은 부드러운 안내이지 엄격한 요구 사항이 아닙니다."
+  },
+  "catchup": {
+    "button": "나중에 기록",
+    "successTitle": "기록 완료",
+    "successDescription": "이 알림이 성공적으로 기록되었습니다"
+  },
+  "actions": {
+    "complete": "완료",
+    "postpone": "연기",
+    "skip": "건너뛰기",
+    "delete": "삭제"
+  }
+}

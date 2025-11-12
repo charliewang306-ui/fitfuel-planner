@@ -1,0 +1,26 @@
+{
+  "name": "FitFuel Planner - 水+营养智能管家",
+  "short_name": "FitFuel Planner",
+  "description": "智能营养与饮水管理应用,根据体重与目标自动规划每日营养",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle"],
+  "lang": "zh-CN"
+}

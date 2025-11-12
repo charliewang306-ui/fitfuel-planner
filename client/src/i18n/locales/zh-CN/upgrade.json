@@ -1,0 +1,118 @@
+{
+  "title": "升级 FitFuel Planner",
+  "subtitle": "选择最适合您的计划",
+  "back_home": "返回首页",
+  "back": "返回",
+  "page_title": "升级到 FitFuel Planner Premium",
+  "page_subtitle": "解锁全部 AI 功能，让智能助手帮你达成健康目标",
+  "already_premium_title": "您已是 Premium 会员",
+  "already_premium_trialing": "您正在享受 7 天免费试用",
+  "already_premium_active": "感谢您的订阅支持！",
+  "already_premium_cancel": "订阅将在计费期末取消",
+  "start_using": "开始使用",
+  "all_features_title": "包含所有高级功能",
+  "stripe_not_configured": "⚠️ Stripe 定价表未配置",
+  "stripe_config_help": "请配置以下环境变量：",
+  "trust_trial_days": "7天",
+  "trust_trial_text": "免费试用",
+  "trust_cancel_anytime": "随时",
+  "trust_cancel_text": "可以取消",
+  "trust_secure": "安全",
+  "trust_secure_text": "Stripe 支付",
+  "plans": {
+    "free": {
+      "name": "Free",
+      "price": "免费",
+      "description": "基础营养追踪",
+      "cta": "当前计划"
+    },
+    "plus": {
+      "name": "Plus",
+      "price": "$14.99/月",
+      "priceYearly": "$29.99/年",
+      "description": "解锁所有目标模式",
+      "savings": "省50%",
+      "cta": "开始 7 天试用",
+      "ctaNoTrial": "立即升级 Plus"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$14.99/月",
+      "priceYearly": "$79.99/年",
+      "description": "终极营养管家",
+      "savings": "省33%",
+      "cta": "开始 7 天试用",
+      "trial": "7天免费试用"
+    }
+  },
+  "premium_features": {
+    "ai_meal_plan": {
+      "label": "AI 菜单规划",
+      "detail": "3次/天 - 个性化三餐计划生成"
+    },
+    "ai_coach": {
+      "label": "AI 教练",
+      "detail": "10次/天 - 智能对话咨询"
+    },
+    "ai_reminders": {
+      "label": "AI 自动提醒",
+      "detail": "早晚各1次智能提醒"
+    },
+    "nutrition_trends": {
+      "label": "7天营养趋势",
+      "detail": "数据可视化分析"
+    },
+    "barcode_ocr": {
+      "label": "条码 & OCR 扫描",
+      "detail": "快速录入食物"
+    },
+    "usda_database": {
+      "label": "USDA 食物库",
+      "detail": "10万+ 食物数据"
+    },
+    "weight_tracking": {
+      "label": "体重趋势追踪",
+      "detail": "长期变化监控"
+    },
+    "advanced_streak": {
+      "label": "高级连续天数设置",
+      "detail": "自定义打卡规则"
+    }
+  },
+  "features": {
+    "hydration_tracking": "饮水追踪",
+    "manual_food_entry": "手动食物录入",
+    "maintain_mode": "维持模式",
+    "all_goal_modes": "所有目标模式（增肌/减脂/维持）",
+    "timeline_reminders": "时间轴提醒",
+    "protein_powder_module": "蛋白粉管理",
+    "weekly_summary": "每周汇总",
+    "i18n_switcher": "多语言切换",
+    "barcode_scan": "扫码录入",
+    "usda_food_db": "USDA 食品数据库（40万+食品）",
+    "ai_nutrition_coach": "AI 营养顾问",
+    "cloud_sync": "云端同步",
+    "data_export_pdf": "数据导出 PDF",
+    "themes_premium": "高级主题"
+  },
+  "billing": {
+    "monthly": "按月计费",
+    "yearly": "按年计费",
+    "switchToYearly": "切换到年付",
+    "switchToMonthly": "切换到月付"
+  },
+  "success": {
+    "title": "订阅成功！",
+    "description": "欢迎使用 FitFuel {{plan}}",
+    "trial": "7天免费试用已开始"
+  },
+  "cancel": {
+    "anytime": "随时可以取消订阅",
+    "noCommitment": "无需承诺"
+  },
+  "ios_purchase_title": "解锁高级功能",
+  "ios_purchase_subtitle": "通过 App Store 订阅即可使用所有高级功能",
+  "unlock_premium": "解锁高级版",
+  "restore_purchases": "恢复购买",
+  "ios_terms": "订阅将通过您的 iTunes 账户扣费。可在账户设置中关闭自动续订。"
+}

@@ -1,0 +1,203 @@
+一次性执行指令（Dashboard 重排 v2）
+
+把首页改成 5 个区块，按这个顺序摆放：
+
+Today Summary（今日总结卡）
+
+Today Progress（今日进度条）
+
+Quick Actions（快速操作）
+
+Weekly Trends（周趋势，默认折叠）
+
+Reference & Formula（参考与公式，默认折叠）
+
+Today Summary（今日总结卡）内容与样式：
+
+大标题：Today
+
+左侧显示：Target (TDEE): 2586 kcal
+
+右侧圆环：Calories（今日已摄入/目标）
+
+小字注释：Goal: Maintain
+
+统一卡片外观：圆角、阴影、内边距 p-4 md:p-6
+
+Today Progress（今日进度条）只保留这 5 条：
+
+Protein / Fat / Carbs / Fiber / Water
+
+右侧显示“已摄入 / 目标”，不要再显示“剩余 0.0”
+
+这 5 条放一个卡片里，标题：Today’s Nutrition
+
+去掉任何超出今天范畴的公式或解释性文本
+
+Quick Actions（快速操作）放 3 个按钮：
+
++ Log Food → 跳 Log 页
+
++ Log Water → 跳 Water 页
+
+Fix Remaining (PRO) → 你的一键补剩余营养按钮
+
+按钮排成一行，移动端自动换行；按钮用大号、图标+文字。
+
+Weekly Trends（周趋势）设置为“默认折叠”：
+
+卡片标题：Weekly Trends
+
+子标题：7-Day Nutrition Tracking
+
+内容：保留折线（Calories）+ 柱形（Protein Accumulated）
+
+交互：标题右侧放“展开/收起”箭头，默认收起
+
+Reference & Formula（参考与公式）设置为“默认折叠”：
+
+卡片标题：Reference & Formula
+
+内部只放两行简版信息 + 一个“查看完整公式”链接：
+
+Hydration ≈ bodyweight(lb) × 0.6 oz/day
+
+Protein (maintain): 0.8–0.9 g per lb
+
+右下角按钮：View Full Formula → 打开独立页面或弹窗
+
+把原先的详细计算过程（例如“脂肪 × 0.35g/lb × 72kg = 29g”等）全部移到这个弹窗/页面里，首页不展示。
+
+从首页移除以下内容：
+
+No protein powder template found. Add one in the food database.
+（此提示只在“添加蛋白粉的弹窗或条形码扫描为空结果时”出现。）
+
+Nutrition Guide 的长段落文字（移到 Reference 折叠卡里或单独页面）
+
+任何“公式运算过程”的明细（移到 View Full Formula）
+
+保留 TDEE 目标，但只显示结果数值，不显示计算细节：
+
+在 Today Summary 卡里展示 Target (TDEE): xxxx kcal
+
+计算过程隐藏在 View Full Formula 里
+
+卡片统一风格（全站复用）：
+
+卡片：rounded-2xl shadow-sm border p-4 md:p-6 bg-white/80 backdrop-blur
+
+标题：text-lg font-semibold
+
+次标题：text-sm text-muted-foreground
+
+区块之间的间距：space-y-4 md:space-y-6
+
+进度条高度：h-3 md:h-3.5，有圆角，右侧显示“已/目标”
+
+Log（记录页）微调
+
+顶部放一个绿色主按钮：+ Quick Add Protein（保留）。
+
+条码扫描与“保存为预设”只在“添加食物的弹窗”里显示，不在列表行显示。
+
+列表每项只留：食物名 + 关键标签（protein/lean/seafood 等）+ 每 100g 卡路里/蛋白。把冗余说明收起到详情页里。
+
+Timeline（时间轴页）微调
+
+顶部放一句提醒条（信息型）：
+Time is rhythm, not constraint — ±90 min flexibility (Plus)
+默认展开一次，之后记住用户选择可折叠。
+
+每一条任务卡左侧保留“完成/跳过”两个主操作按钮；“推迟 +15/+30/+60”并列排在下方，按钮统一小号次要样式。
+
+将“View Advice（查看建议）”改为图标+文字的链接，点击弹侧边抽屉显示建议，不要把建议全文铺在时间轴里。
+
+Settings（设置页）微调
+
+将“个人信息（身高/体重/年龄/性别/目标/活动水平）”放在一个卡片里，标题 Personal Info。
+
+新增一个卡片 Calculations，里边只放两个切换：
+
+TDEE Method（下拉：Mifflin / Katch / Harris）
+
+Protein Rule（下拉：0.7–0.9 g/lb / 0.8–1.0 g/lb / 自定义）
+
+自定义时出现输入框，所有公式改变只影响后续天数，并提示“历史记录不回溯重算”。
+
+新增 Reference & Formula 独立页面或弹窗：把所有公式细节与解释都搬到这里（包括你现在首页那段“详细计算情形”）。
+
+交互与文案统一（直接用）
+
+Today / Today’s Nutrition / Quick Actions / Weekly Trends / Reference & Formula
+
+按钮：Log Food / Log Water / Fix Remaining (PRO) / View Full Formula
+
+空状态统一文案：
+
+“No data yet — start by logging your first meal.”
+
+条码无结果：No preset found for this product. Save as a new preset?
+
+需要删除/隐藏（立即执行）
+
+首页所有“公式过程”的行内说明与长段落文字
+
+首页的 Protein Powder 空状态提示
+
+首页的 Nutrition Guide 大段文字（移到 Reference 折叠或独立页）
+
+可选：一个最简 JSX 结构（交给 Replit 生成）
+export default function Dashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Today Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Today</CardTitle>
+          <CardDescription>Goal: Maintain</CardDescription>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-2 gap-4">
+          <div className="text-2xl font-semibold">Target (TDEE): 2586 kcal</div>
+          <CaloriesRing value={todayCalories} target={tdee} />
+        </CardContent>
+      </Card>
+
+      {/* Today Progress */}
+      <Card>
+        <CardHeader><CardTitle>Today’s Nutrition</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <MacroBar label="Protein" value={pIn} target={pTarget} />
+          <MacroBar label="Fat" value={fIn} target={fTarget} />
+          <MacroBar label="Carbs" value={cIn} target={cTarget} />
+          <MacroBar label="Fiber" value={fiIn} target={fiTarget} />
+          <MacroBar label="Water" value={wIn} target={wTarget} unit="oz" />
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button onClick={() => router.push('/log')}>+ Log Food</Button>
+          <Button onClick={() => router.push('/water')}>+ Log Water</Button>
+          <Button variant="secondary">Fix Remaining (PRO)</Button>
+        </CardContent>
+      </Card>
+
+      {/* Weekly Trends (collapsed by default) */}
+      <Collapse title="Weekly Trends" defaultOpen={false}>
+        <TrendsCharts />
+      </Collapse>
+
+      {/* Reference & Formula (collapsed by default) */}
+      <Collapse title="Reference & Formula" defaultOpen={false}>
+        <p>Hydration ≈ bodyweight(lb) × 0.6 oz/day</p>
+        <p>Protein (maintain): 0.8–0.9 g per lb</p>
+        <Button variant="link" onClick={() => openFormulaModal()}>
+          View Full Formula
+        </Button>
+      </Collapse>
+    </div>
+  )
+}

@@ -1,0 +1,112 @@
+1) lib/safeFetch.ts（统一错误处理 + 只在成功后提示）
+// src/lib/safeFetch.ts
+export async function safeJsonFetch(url: string, options: RequestInit = {}) {
+  const res = await fetch(url, {
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options,
+  });
+
+  const text = await res.text();
+  const ct = res.headers.get('content-type') || '';
+
+  if (!ct.includes('application/json')) {
+    throw new Error(`HTTP ${res.status} non-JSON: ${text.slice(0, 200)}`);
+  }
+
+  let data: any;
+  try { data = JSON.parse(text); } catch (e) {
+    throw new Error(`JSON parse error: ${String(e)} | body: ${text.slice(0, 200)}`);
+  }
+
+  if (!res.ok || data?.error) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
+
+
+前端调用 API 一律改成 safeJsonFetch('/api/xxx', { method:'POST', body: JSON.stringify(payload) })；成功后再 toast 成功。
+
+2) /api/ping（自检接口，排查被重定向到登录的问题）
+// src/app/api/ping/route.ts
+import { NextResponse } from 'next/server';
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
+}
+
+
+访问 /api/ping 应返回 { ok: true }。如果看到登录页 HTML，就说明有重定向/跨域问题。
+
+3) 通用“返回”按钮（没有返回入口时用）
+// src/components/PageHeader.tsx
+'use client';
+import { useRouter } from 'next/navigation';
+
+export default function PageHeader({ title }: { title: string }) {
+  const router = useRouter();
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <button
+        onClick={() => router.back()}
+        className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
+        aria-label="返回"
+      >
+        ← 返回
+      </button>
+      <h1 className="text-lg font-semibold">{title}</h1>
+    </div>
+  );
+}
+
+
+用法示例（页面顶部放一行）：
+
+import PageHeader from '@/components/PageHeader';
+export default function AICoachPage() {
+  return (
+    <>
+      <PageHeader title="AI 智能教练" />
+      {/* ...其余内容 */}
+    </>
+  );
+}
+
+
+可选：在三餐页面生成成功后把结果存一份
+
+localStorage.setItem('lastPlan', JSON.stringify(data));
+
+
+页面挂载时回显：
+
+useEffect(() => {
+  const cached = localStorage.getItem('lastPlan');
+  if (cached && !plan) setPlan(JSON.parse(cached));
+}, []);
+
+4) 端点对齐（你截图里前端叫 /api/ai/coach-advice，后端是 /api/ai/coach/basic-tips & /conversation）
+
+为最快不改前端，加一个转发路由包装器：
+
+// src/app/api/ai/coach-advice/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  // 直接把请求体转发到现有 basic-tips（或按需要转 conversation）
+  const url = new URL(req.url);
+  const target = new URL('/api/ai/coach/basic-tips', url.origin);
+
+  const res = await fetch(target.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: await req.text(),
+  });
+
+  const text = await res.text();
+  return new NextResponse(text, {
+    status: res.status,
+    headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
+  });
+}
+
+
+这样前端保持 /api/ai/coach-advice 不变，后端转发到你已有的实现，立刻消除“端点不匹配”的报错。后续有空再统一命名。

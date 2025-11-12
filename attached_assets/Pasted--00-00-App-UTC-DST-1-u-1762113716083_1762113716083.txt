@@ -1,0 +1,89 @@
+目标：以设备本地时区的 00:00作为换日边界；在 App 打开 / 恢复前台 / 跨午夜时自动“切日并清零今日营养累计”。不使用固定 UTC 偏移，以避免 DST 错误。
+
+1) 工具函数（放到 utils/dateLocal.ts）
+// 返回设备当前 IANA 时区（如 "America/Denver"）
+export function getLocalTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+// 返回本地日期 key：YYYY-MM-DD（不受 DST 影响）
+export function localDateKey(d = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: getLocalTimeZone(),
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(d);
+  const y = parts.find(p => p.type === 'year')!.value;
+  const m = parts.find(p => p.type === 'month')!.value;
+  const day = parts.find(p => p.type === 'day')!.value;
+  return `${y}-${m}-${day}`;
+}
+
+// 计算“距离下一次本地午夜”的毫秒数（DST 自动处理）
+export function msUntilNextLocalMidnight(now = new Date()): number {
+  const next = new Date(now);
+  // 本地时间加到“今天的 24:00:00.000”= 下一次本地午夜
+  next.setHours(24, 0, 0, 0);
+  return next.getTime() - now.getTime();
+}
+
+2) 状态存储（localStorage；如你用 Supabase 也可双写）
+
+localStorage.lastDateKey 记录上次页面运行时的本地日期（YYYY-MM-DD）
+
+localStorage.lastTimeZone 记录上次的时区（如用户移动到别的时区，用它触发重算）
+
+3) 切日与清零入口（放到 App 根组件，比如 App.tsx 或 layout.tsx）
+import { localDateKey, msUntilNextLocalMidnight, getLocalTimeZone } from '@/utils/dateLocal';
+import { resetTodayNutrition } from '@/services/nutrition'; // 你已有的“清零今日累计”的方法
+
+function ensureNewDayAndReset() {
+  const todayKey = localDateKey();
+  const tz = getLocalTimeZone();
+  const lastKey = localStorage.getItem('lastDateKey');
+  const lastTz  = localStorage.getItem('lastTimeZone');
+
+  // 1) 时区变化 → 直接触发一次“切日”保护（更安全）
+  const tzChanged = lastTz && lastTz !== tz;
+
+  if (!lastKey || lastKey !== todayKey || tzChanged) {
+    resetTodayNutrition();               // 清零今日营养累计（蛋白/脂肪/碳水/饮水等）
+    localStorage.setItem('lastDateKey', todayKey);
+    localStorage.setItem('lastTimeZone', tz);
+  }
+}
+
+// 每次进入页面/前台都检查一次
+export function bootDailyRollover() {
+  ensureNewDayAndReset();
+
+  // 2) 页面恢复可见时（用户从后台切回前台）
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') ensureNewDayAndReset();
+  });
+
+  // 3) 安排一个“跨到下一次本地午夜”的定时器（DST 自动处理）
+  function scheduleMidnightTick() {
+    const ms = msUntilNextLocalMidnight();
+    window.setTimeout(() => {
+      ensureNewDayAndReset();  // 午夜一到立刻切日
+      scheduleMidnightTick();  // 继续安排下一次
+    }, ms + 500); // +500ms 保险，避免某些设备的定时器抖动
+  }
+  scheduleMidnightTick();
+
+  // 4) 兜底：每 5 分钟轻量检查一次（避免移动端/休眠导致 setTimeout 丢失）
+  window.setInterval(() => ensureNewDayAndReset(), 5 * 60 * 1000);
+}
+
+
+在应用启动处调用一次 bootDailyRollover()（例如 App 根组件的 useEffect 中）。
+这样就实现了：打开时检查、恢复前台检查、跨午夜自动切换、5 分钟兜底。所有计算都基于“本地时间”，DST 自动生效——无需手工处理夏令时/冬令时。
+
+4) 清零实现点（示例）
+// services/nutrition.ts
+export function resetTodayNutrition() {
+  // 清空“今日累计”相关的本地 state / localStorage / Supabase 行记录
+  // 例如：
+  // setProtein(0); setCarbs(0); setFat(0); setWater(0);
+  // supabase.from('daily_totals').upsert({ user_id, day: localDateKey(), protein: 0, ... })
+}

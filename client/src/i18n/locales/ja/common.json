@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "スマート栄養・水分管理"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "add": "追加",
+    "confirm": "確認",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "per100g": "100gあたり",
+    "serving": "人前",
+    "grams": "グラム",
+    "oz": "オンス",
+    "ml": "ミリリットル",
+    "kcal": "キロカロリー",
+    "scoop": "スクープ",
+    "scoops": "スクープ"
+  },
+  "nutrition": {
+    "protein": "タンパク質",
+    "fat": "脂質",
+    "carbs": "炭水化物",
+    "fiber": "食物繊維",
+    "water": "水分",
+    "calories": "カロリー",
+    "macros": "マクロ栄養素"
+  },
+  "nutrients": {
+    "protein": "タンパク質",
+    "fat": "脂質",
+    "carbs": "炭水化物",
+    "fiber": "食物繊維",
+    "water": "水分",
+    "calories": "カロリー",
+    "macros": "マクロ栄養素"
+  },
+  "goals": {
+    "bulk": "増量（筋肉増加）",
+    "maintain": "維持",
+    "cut": "減量（脂肪減少）"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "log": "記録",
+    "timeline": "タイムライン",
+    "water": "水分",
+    "settings": "設定"
+  },
+  "subscription": {
+    "free": "無料",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Plusにアップグレード",
+  "upgradePro": "PROにアップグレード",
+  "features": {
+    "goal_cut": "減量モード（脂肪減少）",
+    "goal_bulk": "増量モード（筋肉増加）",
+    "custom_macros": "カスタムマクロ目標",
+    "timeline_unlimited": "無制限タイムラインイベント",
+    "timeline_edit": "タイムラインイベントの編集",
+    "timeline_advance_notice": "事前通知リマインダー",
+    "barcode_scan": "バーコードスキャン",
+    "usda_search": "USDA食品データベース",
+    "usda_unlimited": "無制限USDA検索",
+    "protein_powder": "プロテインパウダー追跡",
+    "ai_coach": "AI栄養コーチ",
+    "ai_unlimited": "無制限AI提案",
+    "smart_suggestions": "スマート食事提案",
+    "history_unlimited": "無制限履歴",
+    "weekly_stats": "週間統計",
+    "export_pdf": "PDFエクスポート",
+    "cloud_sync": "クラウド同期",
+    "water_history": "水分摂取履歴",
+    "themes": "カスタムテーマ",
+    "multi_language": "多言語サポート",
+    "no_ads": "広告なし体験"
+  },
+  "paywall": {
+    "requiresPlan": "この機能には{{plan}}プランが必要です",
+    "unlockFeatures": "{{plan}}機能をロック解除",
+    "proPricing": "7日間無料トライアル • $9.99/月",
+    "plusPricing": "$14.99/月"
+  }
+}

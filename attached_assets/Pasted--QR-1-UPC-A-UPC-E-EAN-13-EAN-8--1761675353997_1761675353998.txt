@@ -1,0 +1,194 @@
+把“扫码录入（条码/QR）+ 一键匹配剩余营养”的整套方案补齐，给你能直接开发的简明版👇
+
+1）要扫的码
+
+条形码（主）：UPC-A/UPC-E、EAN-13/EAN-8（包装食品标准；用来查数据库）
+
+QR 码（可选）：商家自定义链接或我们自建的“食品卡片URL”
+
+设备支持：
+
+iOS：AVFoundation（原生）或 VisionKit
+
+Android：ML Kit Barcode Scanning
+
+React Native：react-native-vision-camera + vision-camera-code-scanner
+
+Web/PWA：BarcodeDetector（支持度逐步提升）或 zxing-js
+
+2）数据来源分层（保证可用→做大）
+
+本地轻量库（100–300条常见品牌/品类，离线可用）
+
+开放/权威库（二期接）：按 GTIN/UPC/EAN 查食品，取“每份/每100g 的营养”
+
+OCR 兜底：拍营养成分表 → OCR 解析 → 人工确认后一键入库（本地/云端）
+
+3）数据结构（统一口径）
+FoodBarcode
+- gtin: string         // UPC/EAN
+- food_id: string
+
+FoodItem
+- id, name, brand?
+- per_unit_type: 'per100g' | 'perserving'
+- grams_per_serving?: number
+- kcal_100g, P_100g, F_100g, C_100g, fiber_100g, sodium_100g
+- // 若只有每份：同时保存 per_serving 同名字段（并注明 grams_per_serving）
+
+
+规则：内部一律能换算到“每100g”；前端显示可选 g/oz/kg。
+
+4）扫码→落账流程（前端逻辑）
+
+打开“扫码页”，取到 code.text 与 symbology
+
+用 gtin = normalize(code.text) 去查：
+
+命中本地 FoodBarcode → 取 FoodItem
+
+未命中 → 提示“拍营养表/OCR”或“手动选择品牌/口味”
+
+拉起结果底部弹层：
+
+食品名/品牌、营养（每份 & 每100g）
+
+选择份量单位：份/克/oz（自动换算）
+
+行内显示本次：kcal / P / F / C / 纤维
+
+按钮：加入记录 | 用于补足剩余 | 编辑/修正营养（提交改进）
+
+5）“用于补足剩余”（核心一键）
+
+已知“今日剩余”：remain = {P,F,C,kcal}
+
+给定当前食品（或组合），自动求需要吃的量以尽量贴合 remain
+
+简化求解（单品场景）：
+
+以蛋白为主解：
+servings = remain.P / P_per_serving
+→ 约束到区间 [min_serv, max_serv]（如 0.5–3份）
+→ 计算由此带来的 kcal/F/C 偏差，超差则弹加入主食/脂肪的推荐（两件套）
+
+组合场景（本品 + 主食/蔬菜/脂肪）：走我们的一键补足引擎（已给过 TS 代码），把本品锁定，搜索另一桶食物补齐。
+
+份量换算（统一入口）
+
+1 oz = 28.3495 g，1 kg = 1000 g
+
+本品如仅提供“每份”，务必有 grams_per_serving，否则 OCR/手填补齐
+
+6）OCR 兜底（没有条码或库未命中）
+
+拍“营养成分表”+“包装正面”
+
+OCR 字段映射：
+
+每份大小（Serving Size）→ grams_per_serving
+
+Calories → kcal_per_serving
+
+Protein/Fat/Carbs/Fiber/Sodium per serving
+
+自动换算出每100g：
+X_100g = X_perServing × (100 / grams_per_serving)
+
+进入“确认页”：用户核对 → 保存为自定义 FoodItem并可选择“投稿到公共库”
+
+7）UI 最小稿（扫码页 & 结果弹层）
+
+扫码页：全屏取景 + 居中对齐框 + 闪光灯/相册导入
+
+命中后弹“结果卡”：
+
+标题：品牌 + 食品名
+
+行：每份营养（kcal / P / F / C / 纤维）与每100g切换
+
+份量：数字输入 + 单位选择（份/g/oz/kg）
+
+实时计算：本次 kcal/P/F/C/纤维
+
+按钮：加入记录（主按钮）｜用于补足剩余（次按钮）
+
+失败态：拍营养表（OCR）｜手动录入
+
+8）提醒与倒计时（与扫码联动）
+
+若用“用于补足剩余”并确认加入，自动取消/缩短当晚同类提醒（例如蛋白已足 → 减少晚间蛋白提醒）
+
+到点提醒（响铃/震动）进入“倒计时页”，有“去扫码”快捷入口
+
+9）精度与容错
+
+不同口味/批次→ 营养差异：展示“来源标识”（官方/用户/OCR），按可信度排序
+
+若只有“每份”且无克数 → 提示“先拍份量信息”或用默认估值（必须标“估算”）
+
+营养显示取 1 位小数；存储保留 3–4 位小数
+
+10）示例：面包一袋如何“从中拿够所需”
+
+扫条形码 → 命中“全麦面包（1片=38g）”
+
+剩余：P 20g / C 50g / F 8g / 约 400kcal
+
+计算：若 2 片面包（76g）→ 约 P 8g / C 38g / F 2g / 约 200kcal
+
+引擎提示：还差 P ~12g / C ~12g / F ~6g
+
+推荐加：火鸡胸 80g + 花生酱 1/2 tbsp
+
+或切换为酸奶 + 面包 1 片等组合
+
+一键记录 → 看板即时更新，“剩余差额”归零或在阈值内
+
+11）开发清单（一天内能跑起来的最小实现）
+
+拍码：集成扫码 SDK（见第1点库）
+
+正规化 GTIN & 查本地映射表（JSON/SQLite）
+
+结果弹层：份量选择 + 即时营养计算（基于每100g）
+
+“用于补足剩余”：先做以蛋白为主的单品求解；不满足时弹“加主食/脂肪”二选一
+
+OCR 兜底：先接系统文本识别 + 简单正则映射到营养字段
+
+数据落库：FoodLog 写入营养分解数值；看板刷新
+
+最小代码片段（份量→营养即时计算，含条码回填）
+type Per100g = { kcal:number; P:number; F:number; C:number; fiber:number };
+const OZ = 28.3495;
+
+function toGrams(val:number, unit:'g'|'oz'|'kg'|'serving', gramsPerServing?:number){
+  if(unit==='g') return val;
+  if(unit==='oz') return val*OZ;
+  if(unit==='kg') return val*1000;
+  // serving
+  return (gramsPerServing ?? 0) * val;
+}
+
+function calcIntake(grams:number, per100g:Per100g){
+  const r = grams/100;
+  return {
+    kcal: +(per100g.kcal*r).toFixed(1),
+    P: +(per100g.P*r).toFixed(1),
+    F: +(per100g.F*r).toFixed(1),
+    C: +(per100g.C*r).toFixed(1),
+    fiber: +(per100g.fiber*r).toFixed(1),
+  };
+}
+
+// 用“以蛋白为主”的单品求量（用于“补足剩余”快捷）
+function servingsForProteinFirst(remainP:number, P_per_serv:number, min=0.5, max=3){
+  if(P_per_serv<=0) return 1;
+  const s = Math.min(max, Math.max(min, remainP / P_per_serv));
+  // 四舍五入到 0.5 份
+  return Math.round(s*2)/2;
+}
+
+
+一句话：扫码拿到 GTIN → 查库或拍照OCR → 立刻看到每份/每100g 的 kcal/P/F/C/纤维；点“用于补足剩余”，系统自动算吃多少或配一个组合，一键落账，进度归零。这样你就能“从一袋面包里，拿出恰好身体所需的量”。

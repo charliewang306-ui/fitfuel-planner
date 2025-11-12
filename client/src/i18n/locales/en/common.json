@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "Smart Nutrition & Hydration Manager"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "per100g": "per 100g",
+    "serving": "serving",
+    "grams": "grams",
+    "g": "g",
+    "oz": "oz",
+    "ml": "ml",
+    "kcal": "kcal",
+    "scoop": "scoop",
+    "scoops": "scoops"
+  },
+  "nutrition": {
+    "protein": "Protein",
+    "fat": "Fat",
+    "carbs": "Carbs",
+    "fiber": "Fiber",
+    "water": "Water",
+    "calories": "Calories",
+    "macros": "Macros"
+  },
+  "nutrients": {
+    "protein": "Protein",
+    "fat": "Fat",
+    "carbs": "Carbs",
+    "fiber": "Fiber",
+    "water": "Water",
+    "calories": "Calories",
+    "macros": "Macros"
+  },
+  "goals": {
+    "bulk": "Bulk (Gain Muscle)",
+    "maintain": "Maintain",
+    "cut": "Cut (Lose Fat)"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "log": "Log",
+    "timeline": "Timeline",
+    "water": "Water",
+    "settings": "Settings"
+  },
+  "subscription": {
+    "free": "Free",
+    "plus": "Plus",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Upgrade to Plus",
+  "upgradePro": "Upgrade to PRO",
+  "features": {
+    "goal_cut": "Cut (Fat Loss) Mode",
+    "goal_bulk": "Bulk (Muscle Gain) Mode",
+    "custom_macros": "Custom Macro Targets",
+    "timeline_unlimited": "Unlimited Timeline Events",
+    "timeline_edit": "Edit Timeline Events",
+    "timeline_advance_notice": "Advance Notice Reminders",
+    "barcode_scan": "Barcode Scanning",
+    "usda_search": "USDA Food Database",
+    "usda_unlimited": "Unlimited USDA Searches",
+    "protein_powder": "Protein Powder Tracking",
+    "ai_coach": "AI Nutrition Coach",
+    "ai_unlimited": "Unlimited AI Suggestions",
+    "smart_suggestions": "Smart Meal Suggestions",
+    "history_unlimited": "Unlimited History",
+    "weekly_stats": "Weekly Statistics",
+    "export_pdf": "Export to PDF",
+    "cloud_sync": "Cloud Sync",
+    "water_history": "Water History",
+    "themes": "Custom Themes",
+    "multi_language": "Multi-Language Support",
+    "no_ads": "Ad-Free Experience"
+  },
+  "paywall": {
+    "requiresPlan": "This feature requires {{plan}} plan",
+    "unlockFeatures": "Unlock {{plan}} Features",
+    "proPricing": "7-day free trial • $14.99/month",
+    "plusPricing": "$14.99/month"
+  },
+  "ad": "Advertisement",
+  "adBanner": {
+    "message": "Upgrade to Premium for an ad-free experience",
+    "compactMessage": "Upgrade to remove ads",
+    "upgrade": "Upgrade to Premium",
+    "upgradeShort": "Upgrade",
+    "pricing": "Premium $14.99/mo (7-day free trial)"
+  }
+}

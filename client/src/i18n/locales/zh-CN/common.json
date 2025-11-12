@@ -1,0 +1,101 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "水+营养智能管家"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "confirm": "确认",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "per100g": "每100克",
+    "serving": "份",
+    "grams": "克",
+    "g": "克",
+    "oz": "盎司",
+    "ml": "毫升",
+    "kcal": "千卡",
+    "scoop": "勺",
+    "scoops": "勺"
+  },
+  "nutrition": {
+    "protein": "蛋白质",
+    "fat": "脂肪",
+    "carbs": "碳水",
+    "fiber": "纤维",
+    "water": "饮水",
+    "calories": "卡路里",
+    "macros": "宏量营养素"
+  },
+  "nutrients": {
+    "protein": "蛋白质",
+    "fat": "脂肪",
+    "carbs": "碳水",
+    "fiber": "纤维",
+    "water": "饮水",
+    "calories": "卡路里",
+    "macros": "宏量营养素"
+  },
+  "goals": {
+    "bulk": "增肌",
+    "maintain": "维持",
+    "cut": "减脂"
+  },
+  "nav": {
+    "dashboard": "看板",
+    "log": "记录",
+    "timeline": "时间线",
+    "water": "饮水",
+    "settings": "设置"
+  },
+  "subscription": {
+    "free": "免费版",
+    "plus": "Plus",
+    "pro": "PRO"
+  },
+  "upgradePlus": "升级到Plus",
+  "upgradePro": "升级到PRO",
+  "features": {
+    "goal_cut": "减脂模式",
+    "goal_bulk": "增肌模式",
+    "custom_macros": "自定义营养目标",
+    "timeline_unlimited": "无限时间线事件",
+    "timeline_edit": "编辑时间线事件",
+    "timeline_advance_notice": "提前提醒通知",
+    "barcode_scan": "条码扫描",
+    "usda_search": "USDA食品数据库",
+    "usda_unlimited": "无限USDA搜索",
+    "protein_powder": "蛋白粉追踪",
+    "ai_coach": "AI营养教练",
+    "ai_unlimited": "无限AI建议",
+    "smart_suggestions": "智能膳食建议",
+    "history_unlimited": "无限历史记录",
+    "weekly_stats": "每周统计",
+    "export_pdf": "导出PDF",
+    "cloud_sync": "云端同步",
+    "water_history": "饮水历史",
+    "themes": "自定义主题",
+    "multi_language": "多语言支持",
+    "no_ads": "无广告体验"
+  },
+  "paywall": {
+    "requiresPlan": "此功能需要{{plan}}计划",
+    "unlockFeatures": "解锁{{plan}}功能",
+    "proPricing": "7天免费试用 • $14.99/月",
+    "plusPricing": "$14.99/月"
+  },
+  "ad": "广告",
+  "adBanner": {
+    "message": "升级到Premium版，享受无广告体验",
+    "compactMessage": "升级移除广告",
+    "upgrade": "升级到Premium",
+    "upgradeShort": "升级",
+    "pricing": "Premium $14.99/月（含7天免费试用）"
+  }
+}

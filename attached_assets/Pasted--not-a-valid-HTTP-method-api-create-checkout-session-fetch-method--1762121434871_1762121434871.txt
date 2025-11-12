@@ -1,0 +1,260 @@
+先修错误：点击订阅报“not a valid HTTP method”
+
+原因：前端调用 /api/create-checkout-session 时 fetch 的 method 没正确传入（或传了非法字符串），或者根本没有这个接口。
+
+立即修法（前端按钮事件） —— 把按钮点击代码改成下面“仅三行核心”：
+
+// 前端按钮点击
+import { loadStripe } from '@stripe/stripe-js';
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+async function onStartTrial() {
+  const res = await fetch('/api/create-checkout-session', { method: 'POST' }); // 一定要 POST
+  const { sessionId } = await res.json();
+  const stripe = await stripePromise;
+  await stripe!.redirectToCheckout({ sessionId });
+}
+
+
+只要确保 method 是 'POST'，并且接口存在，就不会出现这个报错。
+
+一次性完成：订阅改造“全指令”
+A. Stripe 后台（一次性设置）
+
+创建商品与价格
+
+Dashboard → Products → Add product
+
+Name：FitMeal Full Access
+
+Pricing：Recurring → Monthly → 14.99 USD
+
+保存后得到 Price ID，形如 price_XXXX。
+
+API Keys
+
+Dashboard → Developers → API keys
+
+复制 Secret key：sk_live_...（或测试 sk_test_...）
+
+复制 Publishable key：pk_live_...（或测试 pk_test_...）
+
+Apple Pay / Google Pay（可选但强烈建议）
+
+Dashboard → Settings → Payment methods
+
+开启 Apple Pay / Google Pay（Stripe Checkout 会自动显示；Apple Pay 需验证域名，按提示点“Add new domain”→ 把 Stripe 给的验证文件放到你的域名 /.well-known 路径，或用 Vercel/静态文件方式上传）
+
+Webhook
+
+Dashboard → Developers → Webhooks → Add endpoint
+
+URL：https://你的域名/api/webhooks/stripe
+
+选择事件：
+
+checkout.session.completed
+
+invoice.payment_succeeded
+
+customer.subscription.updated
+
+customer.subscription.deleted
+
+保存并复制 Signing secret（形如 whsec_xxx）
+
+B. 环境变量（Replit 项目 → Secrets / .env）
+STRIPE_SECRET_KEY=sk_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_xxx
+STRIPE_PRICE_ID=price_xxx
+STRIPE_ENDPOINT_SECRET=whsec_xxx
+APP_URL=https://你的线上域名
+
+
+本地调试时 APP_URL 用你的本地/预览地址也可以，但 Stripe Checkout 回跳必须可访问。
+
+C. 数据表（一次性迁移）
+
+把下面 SQL 扔到你的数据库（Supabase / Postgres 控制台均可）：
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+  ADD COLUMN IF NOT EXISTS stripe_subscription_id text,
+  ADD COLUMN IF NOT EXISTS subscription_status text,
+  ADD COLUMN IF NOT EXISTS subscription_current_period_end timestamptz,
+  ADD COLUMN IF NOT EXISTS subscription_trial_end timestamptz,
+  ADD COLUMN IF NOT EXISTS payment_fingerprint text;
+
+D. 在项目里新增两个接口（拷贝即用）
+
+你用的是 Next.js 就放到 pages/api/...；Express 就放到相应路由里。不用纠结“前后端”的词，照放即可。
+
+1) /api/create-checkout-session（创建结账会话）
+// /pages/api/create-checkout-session.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
+
+// 这里按你的项目读取当前登录用户（示例用假数据）
+async function getCurrentUser(req: NextApiRequest) {
+  // TODO: 换成你项目的鉴权逻辑
+  return { id: 'u_123', email: 'user@example.com', stripe_customer_id: null };
+}
+
+// TODO: 把 customerId 写回数据库（示例空实现）
+async function saveCustomerId(userId: string, customerId: string) {}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const user = await getCurrentUser(req);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  let customerId = user.stripe_customer_id as string | null;
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email: user.email, metadata: { userId: user.id } });
+    customerId = customer.id;
+    await saveCustomerId(user.id, customerId);
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer: customerId,
+    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+    subscription_data: { trial_period_days: 7 },
+    allow_promotion_codes: true,
+    success_url: `${process.env.APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.APP_URL}/billing/cancel`,
+  });
+
+  return res.status(200).json({ sessionId: session.id });
+}
+
+2) /api/webhooks/stripe（必须启用，处理订阅状态）
+
+注意：Webhooks 需要 raw body。Next.js 需禁用默认解析。
+
+// /pages/api/webhooks/stripe.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import Stripe from 'stripe';
+
+export const config = { api: { bodyParser: false } }; // 关键：保持 raw body
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
+
+// —— 这些函数替换成你项目的数据库读写 —— //
+async function findUserByStripeCustomer(customerId: string) { /* ... */ return { id:'u_123' } }
+async function updateUser(uid: string, data: any) { /* ... */ }
+async function findOtherActiveByFingerprint(fp: string, currentUid: string) { return null } // 有则返回其他用户
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const sig = req.headers['stripe-signature'] as string;
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of req) chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  const rawBody = Buffer.concat(chunks);
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_ENDPOINT_SECRET!);
+  } catch (err: any) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const customerId = session.customer as string;
+        const subId = session.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        const user = await findUserByStripeCustomer(customerId);
+        await updateUser(user.id, {
+          stripe_subscription_id: subId,
+          subscription_status: subscription.status,
+          subscription_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+          subscription_current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
+        });
+        break;
+      }
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = invoice.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        const customerId = subscription.customer as string;
+        const user = await findUserByStripeCustomer(customerId);
+
+        // 读取指纹
+        let fingerprint: string | null = null;
+        if (invoice.payment_intent) {
+          const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent as string);
+          if (pi.payment_method) {
+            const pm = await stripe.paymentMethods.retrieve(pi.payment_method as string);
+            fingerprint = (pm.card && (pm.card as any).fingerprint) || null;
+          }
+        }
+
+        // 防重复卡：若同一指纹已在其他活跃用户，取消本订阅
+        if (fingerprint) {
+          const other = await findOtherActiveByFingerprint(fingerprint, user.id);
+          if (other) {
+            await stripe.subscriptions.del(subId); // 阻止重复
+            // 可在此发送邮件/提示
+            return res.json({ received: true });
+          }
+        }
+
+        await updateUser(user.id, {
+          payment_fingerprint: fingerprint,
+          subscription_status: subscription.status,
+          subscription_current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
+        });
+        break;
+      }
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = sub.customer as string;
+        const user = await findUserByStripeCustomer(customerId);
+        await updateUser(user.id, {
+          subscription_status: sub.status,
+          subscription_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+        });
+        break;
+      }
+    }
+
+    res.json({ received: true });
+  } catch (e: any) {
+    res.status(500).send(e.message);
+  }
+}
+
+E. 访问控制（一句话逻辑）
+
+在你所有“付费功能”的入口，统一判断：
+subscription_status ∈ ['trialing','active'] → 允许使用；否则弹订阅页。
+
+F. 文案（按你要求精简）
+
+顶部主承诺：解锁全功能 · 自动完成饮食规划与记录
+
+价格区：试用 7 天 → 之后 $14.99/月
+
+次行小字：随时取消
+
+去掉“自动续订”四个字，只保留“随时取消”。
+
+G. 排查清单（照着点一次即可）
+
+页面按钮事件是否使用 POST 调 /api/create-checkout-session。
+
+两个接口是否能访问：/api/create-checkout-session、/api/webhooks/stripe。
+
+Stripe Webhook 是否加了你的线上地址和 4 个事件；Signing secret 是否已填入 STRIPE_ENDPOINT_SECRET。
+
+环境变量是否正确（pk/sk/price/whsec/app_url）。
+
+点击“开始试用”能跳出 Stripe → 成功后回到 success_url；用户的 subscription_status 变为 trialing。
+
+用 Stripe 测试时钟让试用到期 → 首次扣费成功后，subscription_status 变 active。

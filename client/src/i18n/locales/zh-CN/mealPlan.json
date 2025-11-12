@@ -1,0 +1,70 @@
+{
+  "page_title": "AI三餐菜单",
+  "page_title_bulk": "AI三餐菜单--增肌",
+  "page_title_cut": "AI三餐菜单--减脂",
+  "page_title_maintain": "AI三餐菜单--维持",
+  "badge_tier": "Pro",
+  "generate_plan": "生成今日三餐计划",
+  "generating": "生成中...",
+  "plan": {
+    "today_recommendation": "今日AI推荐",
+    "total": "总计：",
+    "protein": "蛋白",
+    "carbs": "碳水",
+    "fat": "脂肪",
+    "applied": "已应用",
+    "regenerate": "重新生成",
+    "snack_recommend": "AI零食推荐",
+    "recommending": "推荐中..."
+  },
+  "meals": {
+    "breakfast": "早餐",
+    "lunch": "午餐",
+    "dinner": "晚餐"
+  },
+  "nutrition": {
+    "divider": "营养推荐",
+    "fill_remaining": "剩余营养推荐",
+    "remaining": "剩余：",
+    "refresh": "换一组",
+    "refresh_loading": "生成中...",
+    "click_to_generate": "点击上方按钮，生成今日补充建议",
+    "rationale_prefix": "💡",
+    "tip_prefix": "✨"
+  },
+  "snacks": {
+    "title": "AI零食推荐",
+    "goal": "目标：",
+    "notes": "备注：",
+    "why": "为什么：",
+    "swaps": "替换：",
+    "click_to_generate": "点击上方按钮，生成AI零食推荐"
+  },
+  "food": {
+    "add_to_log": "加入记录",
+    "amount": "{{amount}}g"
+  },
+  "toasts": {
+    "plan_generated": "AI菜单已生成",
+    "plan_generated_desc": "今日三餐计划已生成！",
+    "generate_failed": "生成失败",
+    "plan_applied": "已记录所有食物",
+    "plan_applied_desc": "三餐所有食物已添加到今日记录",
+    "apply_failed": "记录失败",
+    "apply_failed_desc": "无法记录食物",
+    "suggestions_updated": "推荐已更新",
+    "suggestions_updated_desc": "为您推荐了{{count}}组食物搭配",
+    "suggestions_failed": "获取推荐失败",
+    "suggestions_failed_desc": "无法生成推荐",
+    "suggestions_no_data": "无法获取今日剩余营养数据",
+    "snacks_generated": "AI零食推荐已生成",
+    "snacks_generated_desc": "为您推荐了{{count}}个零食选项",
+    "snacks_failed": "获取零食推荐失败",
+    "snacks_failed_desc": "无法生成零食推荐",
+    "food_logged": "已加入记录",
+    "food_logged_desc": "食物已成功记录到今日日志",
+    "food_log_failed": "记录失败",
+    "food_log_failed_desc": "无法记录食物",
+    "invalid_amount": "Invalid amount"
+  }
+}

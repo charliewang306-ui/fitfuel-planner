@@ -1,0 +1,106 @@
+新规则：自动完成（Auto-done）
+
+状态字段
+
+daily_done: boolean
+
+autodone_reason: 'sleep' | 'macro_ok' | 'day_rollover' | null
+
+done_at: timestamp | null
+
+user_sleep_time: HH:mm（用户设置的就寝时间）
+
+last_log_at: timestamp（最后一次记录时间）
+
+判定时机（触发 recompute）
+
+每次新增/编辑/删除食物或饮水记录
+
+每 15 分钟定时器（前端/后端任一）
+
+跨日 03:00 本地时间
+
+触发条件（满足任一即自动完成）
+
+睡前完成
+
+if now >= (user_sleep_time - 30min) 
+   and (now - last_log_at) >= 90min:
+   daily_done = true
+   autodone_reason = 'sleep'
+
+
+目标基本达成
+
+let cal_ratio  = calories_intake / tdee_target       // 推荐阈值：0.80~1.15
+let pro_ratio  = protein_intake  / protein_target    // 推荐阈值：>=0.85
+let water_ok   = water_intake in [0.6*water_goal, 1.2*water_goal]
+
+if (pro_ratio >= 0.85) 
+   and (cal_ratio >= 0.80) 
+   and water_ok
+   and (now - last_log_at) >= 90min:
+   daily_done = true
+   autodone_reason = 'macro_ok'
+
+
+阈值可调：
+
+增肌：pro_ratio >= 0.9 更严格
+
+减脂：cal_ratio >= 0.75 即可
+
+跨日兜底
+
+if local_time == 03:00 next day and daily_done == false:
+   daily_done = true
+   autodone_reason = 'day_rollover'
+
+UI 行为
+
+顶部“完成今日”按钮默认隐藏；仅在 daily_done=false 且用户想提前结束时显示“手动完成”。
+
+自动完成后显示 “已完成 · 原因：睡前/达标/次日归档” 与时间戳 done_at。
+
+若当天仍差距较大（例如 protein_intake < 0.6*protein_target 或 cal_ratio < 0.6），在睡前 30 分钟弹出温和提醒：“蛋白剩余 38g，是否补一份酸奶 + 鸡胸？（仍可自动完成）”。
+
+伪代码（交给 Replit 直接做）
+function recomputeDailyDone(ctx) {
+  const now = ctx.nowLocal();
+  const sleepTime = ctx.user.sleep_time;  // '23:30'
+  const lastLogAt = ctx.day.last_log_at;
+  const tdee = ctx.day.targets.calories;
+  const proTarget = ctx.day.targets.protein;
+  const waterGoal = ctx.day.targets.water_oz;
+
+  const calRatio = ctx.day.intake.calories / tdee;
+  const proRatio = ctx.day.intake.protein  / proTarget;
+  const waterOk  = (ctx.day.intake.water_oz >= 0.6*waterGoal &&
+                    ctx.day.intake.water_oz <= 1.2*waterGoal);
+
+  if (ctx.day.daily_done) return;
+
+  // 条件2：目标基本达成
+  if (proRatio >= 0.85 && calRatio >= 0.80 && waterOk &&
+      minutesSince(lastLogAt, now) >= 90) {
+    setDone('macro_ok'); return;
+  }
+
+  // 条件1：睡前完成
+  if (now >= minutesBefore(sleepTime, 30) &&
+      minutesSince(lastLogAt, now) >= 90) {
+    setDone('sleep'); return;
+  }
+
+  // 条件3：次日 03:00 兜底
+  if (isRollover3AM(now)) {
+    setDone('day_rollover'); return;
+  }
+
+  function setDone(reason) {
+    ctx.day.daily_done = true;
+    ctx.day.autodone_reason = reason;
+    ctx.day.done_at = now;
+    save(ctx.day);
+  }
+}

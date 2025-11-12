@@ -1,0 +1,118 @@
+{
+  "title": "Upgrade FitFuel Planner",
+  "subtitle": "Choose the plan that fits you best",
+  "back_home": "Back to Home",
+  "back": "Back",
+  "page_title": "Upgrade to FitFuel Planner Premium",
+  "page_subtitle": "Unlock all AI features to help you achieve your health goals",
+  "already_premium_title": "You're already a Premium member",
+  "already_premium_trialing": "You're enjoying a 7-day free trial",
+  "already_premium_active": "Thank you for your subscription!",
+  "already_premium_cancel": "Subscription will end at period end",
+  "start_using": "Start Using",
+  "all_features_title": "All Premium Features Included",
+  "stripe_not_configured": "⚠️ Stripe Pricing Table Not Configured",
+  "stripe_config_help": "Please configure the following environment variables:",
+  "trust_trial_days": "7 Days",
+  "trust_trial_text": "Free Trial",
+  "trust_cancel_anytime": "Anytime",
+  "trust_cancel_text": "Cancel Anytime",
+  "trust_secure": "Secure",
+  "trust_secure_text": "Stripe Payment",
+  "plans": {
+    "free": {
+      "name": "Free",
+      "price": "Free",
+      "description": "Basic nutrition tracking",
+      "cta": "Current Plan"
+    },
+    "plus": {
+      "name": "Plus",
+      "price": "$14.99/month",
+      "priceYearly": "$149.99/year",
+      "description": "Unlock all goal modes",
+      "savings": "Save 50%",
+      "cta": "Start 7-Day Trial",
+      "ctaNoTrial": "Upgrade to Plus"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$14.99/month",
+      "priceYearly": "$149.99/year",
+      "description": "Ultimate nutrition manager",
+      "savings": "Save 33%",
+      "cta": "Start 7-Day Trial",
+      "trial": "7-day free trial"
+    }
+  },
+  "premium_features": {
+    "ai_meal_plan": {
+      "label": "AI Meal Planning",
+      "detail": "3/day - Personalized 3-meal plans"
+    },
+    "ai_coach": {
+      "label": "AI Coach",
+      "detail": "10/day - Smart conversation"
+    },
+    "ai_reminders": {
+      "label": "AI Auto Reminders",
+      "detail": "Morning & evening smart reminders"
+    },
+    "nutrition_trends": {
+      "label": "7-Day Nutrition Trends",
+      "detail": "Data visualization analysis"
+    },
+    "barcode_ocr": {
+      "label": "Barcode & OCR Scanning",
+      "detail": "Quick food entry"
+    },
+    "usda_database": {
+      "label": "USDA Food Database",
+      "detail": "100,000+ food items"
+    },
+    "weight_tracking": {
+      "label": "Weight Trend Tracking",
+      "detail": "Long-term change monitoring"
+    },
+    "advanced_streak": {
+      "label": "Advanced Streak Settings",
+      "detail": "Custom check-in rules"
+    }
+  },
+  "features": {
+    "hydration_tracking": "Hydration tracking",
+    "manual_food_entry": "Manual food entry",
+    "maintain_mode": "Maintain mode only",
+    "all_goal_modes": "All goal modes (Bulk/Cut/Maintain)",
+    "timeline_reminders": "Timeline reminders",
+    "protein_powder_module": "Protein powder management",
+    "weekly_summary": "Weekly summary",
+    "i18n_switcher": "Multi-language support",
+    "barcode_scan": "Barcode scanning",
+    "usda_food_db": "USDA Food Database (400,000+ foods)",
+    "ai_nutrition_coach": "AI nutrition coach",
+    "cloud_sync": "Cloud sync",
+    "data_export_pdf": "Export data as PDF",
+    "themes_premium": "Premium themes"
+  },
+  "billing": {
+    "monthly": "Billed monthly",
+    "yearly": "Billed yearly",
+    "switchToYearly": "Switch to yearly",
+    "switchToMonthly": "Switch to monthly"
+  },
+  "success": {
+    "title": "Subscription successful!",
+    "description": "Welcome to FitFuel {{plan}}",
+    "trial": "7-day free trial started"
+  },
+  "cancel": {
+    "anytime": "Cancel anytime",
+    "noCommitment": "No commitment required"
+  },
+  "ios_purchase_title": "Unlock Premium Features",
+  "ios_purchase_subtitle": "Subscribe through the App Store to access all premium features",
+  "unlock_premium": "Unlock Premium",
+  "restore_purchases": "Restore Purchases",
+  "ios_terms": "Subscription will be charged to your iTunes Account. Auto-renewal can be turned off in Account Settings."
+}

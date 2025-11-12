@@ -1,0 +1,48 @@
+{
+  "title": "الجدول الزمني",
+  "today": "اليوم",
+  "reminders": "التذكيرات",
+  "noReminders": "لا توجد تذكيرات لهذا اليوم",
+  "addReminder": "إضافة تذكير",
+  "editReminder": "تعديل التذكير",
+  "deleteReminder": "حذف التذكير",
+  "time": "الوقت",
+  "status": {
+    "pending": "قيد الانتظار",
+    "completed": "مكتمل",
+    "overdue": "متأخر",
+    "missed": "فائت",
+    "postponed": "مؤجل",
+    "skipped": "متجاوز"
+  },
+  "countdown": {
+    "remaining": "المتبقي",
+    "overdue": "متأخر",
+    "hours": "{count}س",
+    "minutes": "{count}د"
+  },
+  "postpone": {
+    "title": "تأجيل",
+    "min15": "+15 دقيقة",
+    "min30": "+30 دقيقة",
+    "min60": "+60 دقيقة"
+  },
+  "markCompleted": "تحديد كمكتمل",
+  "scheduledTime": "الوقت المجدول",
+  "description": "الوصف",
+  "infoBanner": {
+    "title": "الوقت إيقاع وليس قيدًا",
+    "description": "فاتك تذكير؟ لا تقلق! يمكنك التسجيل في أي وقت. نحن نركز على إجمالي تغذيتك اليومية، وليس على التوقيت الصارم. يجب أن تكون عاداتك الصحية مرنة ومستدامة—التذكيرات هي إرشادات لطيفة، وليست متطلبات صارمة."
+  },
+  "catchup": {
+    "button": "التسجيل لاحقًا",
+    "successTitle": "تم التسجيل",
+    "successDescription": "تم تسجيل هذا التذكير بنجاح"
+  },
+  "actions": {
+    "complete": "إكمال",
+    "postpone": "تأجيل",
+    "skip": "تجاوز",
+    "delete": "حذف"
+  }
+}

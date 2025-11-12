@@ -1,0 +1,267 @@
+目标：为 FitMeal 增加「蛋白粉」的标准化录入能力（预置+自定义+扫码），并计入总营养与建议逻辑，保持 i18n / 单位切换一致。
+
+0) 总则
+
+技术栈延续项目现有方案（Next.js + Supabase/Postgres）。
+
+严格保持现有 UI/状态管理风格；新增的 API 与表均以 foods_* 前缀。
+
+文案需同时提供 zh / en 的 i18n key（放到现有的 i18n 资源文件里）。
+
+1) 数据层（Supabase / Postgres）
+1.1 新增通用“食物模板表”（预置蛋白粉与常见高蛋白）
+-- 预置食物模板（系统级，不按用户划分）
+create table if not exists food_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,               -- 显示名（i18n key 可另表）
+  category text not null,           -- protein_powder / meat / dairy ...
+  tags text[] default '{}',         -- ['protein','whey','vegan'...]
+  per_100g_protein numeric not null,
+  per_100g_fat numeric not null,
+  per_100g_carb numeric not null,
+  per_100g_kcal numeric not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_food_templates_tags on food_templates using gin (tags);
+
+-- 预置三类蛋白粉模板
+insert into food_templates (name, category, tags, per_100g_protein, per_100g_fat, per_100g_carb, per_100g_kcal)
+values
+('乳清蛋白粉（Whey）','protein_powder', ARRAY['protein','whey'],
+ 80, 4, 8, 390),
+('植物蛋白粉（Plant/Pea/Soy）','protein_powder', ARRAY['protein','vegan','plant'],
+ 70, 7, 10, 380),
+('混合蛋白粉（Blend）','protein_powder', ARRAY['protein','blend'],
+ 75, 6, 12, 400)
+on conflict do nothing;
+
+1.2 用户自定义食物（含自定义品牌蛋白粉）
+create table if not exists user_foods (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,                -- 如：ON Gold Standard Whey
+  category text not null,            -- protein_powder / ...
+  tags text[] default '{}',
+  per_100g_protein numeric not null,
+  per_100g_fat numeric not null,
+  per_100g_carb numeric not null,
+  per_100g_kcal numeric not null,
+  default_serving_g numeric default 30, -- 默认每勺克数
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_user_foods_user on user_foods(user_id);
+
+1.3 条码映射表（支持扫码录入蛋白粉）
+create table if not exists barcode_food_map (
+  barcode text primary key,     -- 支持 EAN/UPC/QR 内容
+  source text not null,         -- 'template' | 'user_food'
+  ref_id uuid not null          -- 指向 food_templates.id 或 user_foods.id
+);
+
+
+说明：后续你可陆续把常见品牌条码补进 barcode_food_map，也允许用户把自己的条码绑定到 user_foods。
+
+2) API 层
+
+放在你现有的 API 路由体系（保持项目风格，例如 /api/foods/*）
+
+2.1 搜索与快速获取
+
+GET /api/foods/search?q=&tag=&category=
+
+汇总 food_templates + user_foods（若登录），支持 tags/category 过滤，按相似度返回最多 30 条。
+
+关键字例：protein powder/蛋白粉/whey/vegan。
+
+GET /api/foods/templates?category=protein_powder
+
+返回预置三类蛋白粉模板（用于“快速添加”弹窗的下拉）。
+
+2.2 扫码映射
+
+GET /api/foods/barcode/:code
+
+命中 barcode_food_map → 拉取对应 template 或 user_food 完整营养。
+
+未命中 → 404 + 引导前端进入“创建我的蛋白粉”表单。
+
+2.3 用户自定义创建/更新
+
+POST /api/foods/user
+
+body: name, category, per_100g_protein/fat/carb/kcal, default_serving_g, tags[]
+
+返回新建 user_foods。
+
+PUT /api/foods/user/:id（可选）
+
+POST /api/foods/barcode/bind
+
+将条码与 template 或 user_food 绑定。
+
+以上 API 需做 RLS/鉴权（仅操作自己的 user_foods）。
+
+3) 前端：记录页「快速添加蛋白粉」
+3.1 在“记录”页顶部加入一个卡片组（不破坏现有布局）
+
+卡片标题：蛋白粉 Protein Powder（i18n）
+
+操作按钮：
+
+从模板快速添加（下拉：Whey / Plant / Blend）
+
+扫码添加（复用你已有扫码入口，走 /api/foods/barcode/:code）
+
+创建我的蛋白粉（弹窗表单）
+
+3.2 “从模板快速添加”弹窗
+
+表单字段：
+
+模板选择（Whey / Plant / Blend）
+
+份量：[ 1 ] 勺（可切换 g），右侧展示“每勺克数（默认 30 g，可改）”
+
+实时换算显示：本次摄入 = P/F/C/kcal
+
+点击“添加” → 写入你当前使用的“摄入记录表”（沿用现有 schema），字段包含：
+
+name, category, grams, protein, fat, carb, kcal, time
+
+归类到 加餐/训练后（如果当前时间在“训练窗口”内，可自动标记；不强制）
+
+计算公式：
+protein = per_100g_protein * grams / 100（fat/carb/kcal 同理）
+
+3.3 “创建我的蛋白粉”弹窗
+
+字段：name, 每100g 的 P/F/C/kcal, 默认每勺(g)，可加 tags（如 whey/soy/vegan）
+
+保存后：
+
+建立 user_foods；
+
+立即提供“添加一份”的入口（同 3.2 的计算逻辑）
+
+可选：允许绑定当前扫码的条码。
+
+3.4 单位与 i18n
+
+单位：勺/克/盎司 三档切换（与全局单位设置同步）。
+
+文案 i18n keys（示例）：
+
+record.quickAdd.proteinPowder
+
+record.quickAdd.fromTemplate
+
+record.quickAdd.createMyProtein
+
+record.serving.scoop
+
+common.per100g
+
+common.previewNutrition
+
+4) 看板与智能建议联动
+4.1 统计进度条
+
+将蛋白粉摄入计入当天 P/F/C 与 kcal 汇总（复用现有聚合逻辑，无需分支判断）。
+
+4.2 训练后智能补给（差异化亮点）
+
+当用户目标 = 增肌/维持/减脂，按你设定的 g/kg 目标（例如 1.8~2.2 g/kg）计算“今日目标蛋白”。
+
+若「距离目标还差 X g」且当前时间处于训练后 1 小时内，在看板弹出绿色建议条：
+
+“建议补充 X g 蛋白（≈ Y g 蛋白粉）以完成今日恢复目标。”
+
+点击即可打开“从模板快速添加”并自动带入份量。
+
+5) 扫码录入 UX 流程
+
+用户在“记录”页点“扫码”。
+
+命中：
+
+直接弹出“确认添加”弹窗（显示品牌名 + 每份营养 + 可改份量）。
+
+未命中：
+
+提示“未找到，是否创建？”→ 打开“创建我的蛋白粉”，并预填 name（若二维码内含名）与 default_serving_g=30。
+
+提交后可“绑定此条码”，日后直接命中。
+
+6) 校验与默认值
+
+per_100g_protein/fat/carb/kcal 必填且 ≥ 0，合计 kcal 建议 ≈ 4*P + 9*F + 4*C（允许±10% 误差，超出则给出提示避免录错）。
+
+default_serving_g 默认 30（可改 20–40 g 范围）。
+
+7) 权限与安全
+
+user_foods 仅允许本人 CRUD；
+
+barcode_food_map 允许任何人读取；写入仅限本人绑定自己 user_foods，模板绑定由管理员或系统种子数据处理。
+
+API 在服务端再做一次用户身份校验（沿用你现有中间件）。
+
+8) UI 细节（与你现有风格保持一致）
+
+“记录”页的蛋白粉卡片使用与你“食谱解析/扫码”同级别的卡片视觉；
+
+弹窗底部放实时预览：本次将增加：P xx g / F xx g / C xx g / xx kcal；
+
+加入一个“训练后”小徽标（若当前时间触发训练后窗口），提升仪式感；
+
+历史记录里，蛋白粉条目前缀图标用小摇杯/勺子图（和饮水的水滴、食物的盘子形成区分）。
+
+9) i18n 文案（样例 key/value）
+{
+  "record": {
+    "quickAdd": {
+      "proteinPowder": "蛋白粉",
+      "fromTemplate": "从模板快速添加",
+      "createMyProtein": "创建我的蛋白粉",
+      "scanToAdd": "扫码添加"
+    },
+    "serving": {
+      "scoop": "勺",
+      "grams": "克",
+      "oz": "盎司"
+    },
+    "previewNutrition": "本次摄入（预览）"
+  },
+  "suggestion": {
+    "postWorkoutProtein": "建议训练后补 {protein}g 蛋白（≈ {powder}g 蛋白粉）以完成今日目标"
+  }
+}
+
+
+英文同义一并补齐（Protein Powder / Add from template / Create my protein …）。
+
+10) 验收与测试
+
+ 记录页能：a) 模板添加；b) 扫码命中添加；c) 扫码未命中 → 创建 → 绑定 → 再扫码命中
+
+ 看板进度条/今日汇总实时变化
+
+ 训练后建议条出现/点击自动带入份量
+
+ 单位切换（勺/克/盎司）正确换算
+
+ i18n 正常切换（跟随系统/浏览器语言）
+
+（可选加分）PRO 专属 AI 识别
+
+在“创建我的蛋白粉”中提供 拍照识别营养表（OCR + 字段解析），作为 PRO 功能；失败则回落到手动输入。
+
+识别成功后预填 per_100g 值，用户只需确认 & 保存。
+
+提醒
+
+不改动你现有的摄入记录表结构（沿用就好），本次只新增“模板/用户食物/条码映射”三表 + 最小 API 与 UI；
+
+若现有“扫码”功能已经有路由，只需把命中/未命中逻辑切换到上面的 API 即可。

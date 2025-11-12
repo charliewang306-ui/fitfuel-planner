@@ -1,0 +1,48 @@
+{
+  "title": "タイムライン",
+  "today": "今日",
+  "reminders": "リマインダー",
+  "noReminders": "本日のリマインダーはありません",
+  "addReminder": "リマインダーを追加",
+  "editReminder": "リマインダーを編集",
+  "deleteReminder": "リマインダーを削除",
+  "time": "時刻",
+  "status": {
+    "pending": "保留中",
+    "completed": "完了",
+    "overdue": "期限切れ",
+    "missed": "未完了",
+    "postponed": "延期済み",
+    "skipped": "スキップ済み"
+  },
+  "countdown": {
+    "remaining": "残り",
+    "overdue": "期限切れ",
+    "hours": "{count}時間",
+    "minutes": "{count}分"
+  },
+  "postpone": {
+    "title": "延期",
+    "min15": "+15分",
+    "min30": "+30分",
+    "min60": "+60分"
+  },
+  "markCompleted": "完了としてマーク",
+  "scheduledTime": "予定時刻",
+  "description": "説明",
+  "infoBanner": {
+    "title": "時間はリズムであり、制約ではありません",
+    "description": "リマインダーを逃しても大丈夫！いつでも後から記録できます。私たちは厳密なタイミングではなく、1日の栄養摂取総量を重視しています。健康習慣は柔軟で持続可能であるべきです。リマインダーは優しいガイダンスであり、厳格な要件ではありません。"
+  },
+  "catchup": {
+    "button": "後で記録",
+    "successTitle": "記録完了",
+    "successDescription": "このリマインダーを記録しました"
+  },
+  "actions": {
+    "complete": "完了",
+    "postpone": "延期",
+    "skip": "スキップ",
+    "delete": "削除"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "Gestionnaire Intelligent de Nutrition et Hydratation"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "per100g": "pour 100g",
+    "serving": "portion",
+    "grams": "grammes",
+    "oz": "oz",
+    "ml": "ml",
+    "kcal": "kcal",
+    "scoop": "dose",
+    "scoops": "doses"
+  },
+  "nutrition": {
+    "protein": "Protéines",
+    "fat": "Lipides",
+    "carbs": "Glucides",
+    "fiber": "Fibres",
+    "water": "Eau",
+    "calories": "Calories",
+    "macros": "Macros"
+  },
+  "nutrients": {
+    "protein": "Protéines",
+    "fat": "Lipides",
+    "carbs": "Glucides",
+    "fiber": "Fibres",
+    "water": "Eau",
+    "calories": "Calories",
+    "macros": "Macros"
+  },
+  "goals": {
+    "bulk": "Prise de masse (Gain musculaire)",
+    "maintain": "Maintien",
+    "cut": "Sèche (Perte de graisse)"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "log": "Enregistrer",
+    "timeline": "Chronologie",
+    "water": "Eau",
+    "settings": "Paramètres"
+  },
+  "subscription": {
+    "free": "Gratuit",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Passer à Plus",
+  "upgradePro": "Passer à PRO",
+  "features": {
+    "goal_cut": "Mode Sèche (Perte de Graisse)",
+    "goal_bulk": "Mode Prise de Masse (Gain Musculaire)",
+    "custom_macros": "Objectifs de Macros Personnalisés",
+    "timeline_unlimited": "Événements de Chronologie Illimités",
+    "timeline_edit": "Modifier les Événements de Chronologie",
+    "timeline_advance_notice": "Rappels avec Préavis",
+    "barcode_scan": "Scan de Code-Barres",
+    "usda_search": "Base de Données Alimentaire USDA",
+    "usda_unlimited": "Recherches USDA Illimitées",
+    "protein_powder": "Suivi de Protéine en Poudre",
+    "ai_coach": "Coach Nutrition IA",
+    "ai_unlimited": "Suggestions IA Illimitées",
+    "smart_suggestions": "Suggestions Intelligentes de Repas",
+    "history_unlimited": "Historique Illimité",
+    "weekly_stats": "Statistiques Hebdomadaires",
+    "export_pdf": "Exporter en PDF",
+    "cloud_sync": "Synchronisation Cloud",
+    "water_history": "Historique d'Eau",
+    "themes": "Thèmes Personnalisés",
+    "multi_language": "Support Multilingue",
+    "no_ads": "Expérience sans Publicité"
+  },
+  "paywall": {
+    "requiresPlan": "Cette fonctionnalité nécessite le plan {{plan}}",
+    "unlockFeatures": "Débloquer les Fonctionnalités {{plan}}",
+    "proPricing": "Essai gratuit de 7 jours • 9,99 $/mois",
+    "plusPricing": "4,99 $/mois"
+  }
+}

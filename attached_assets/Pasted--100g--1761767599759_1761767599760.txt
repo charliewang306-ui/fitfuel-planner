@@ -1,0 +1,75 @@
+① 条码种子脚本（可直接执行）
+
+作用：
+
+先补充更细的模板（常见品牌/类型的“每100g”营养参数，数值为行业常见范围，后续你可微调）。
+
+把若干示例条码绑定到模板上（先跑通扫码 → 命中 → 一键添加的全链路）。
+
+示例条码使用占位符（形如 90000000000xx），你后续可以用真实条码覆盖绑定，流程不变。
+
+-- 1) 更丰富的蛋白粉模板（在原有3条基础上增加品牌化/类型化模板）
+insert into food_templates (name, category, tags, per_100g_protein, per_100g_fat, per_100g_carb, per_100g_kcal)
+values
+-- 乳清（Whey）常见配方区间：P 75–82 / F 3–7 / C 5–10 / 380~410 kcal
+('Whey 经典乳清',            'protein_powder', ARRAY['protein','whey','default'], 80,  4,  8,  390),
+('Whey 低脂乳清',            'protein_powder', ARRAY['protein','whey','lean'],    81,  3,  7,  385),
+('Whey 高碳乳清',            'protein_powder', ARRAY['protein','whey','carb'],    78,  4, 12,  410),
+
+-- 植物（Plant/Pea/Soy）常见区间：P 65–75 / F 5–10 / C 8–15
+('Plant 植物蛋白（豌豆/大豆）', 'protein_powder', ARRAY['protein','vegan','plant'],  70,  7, 10,  380),
+
+-- 混合（Blend）
+('Blend 混合蛋白',            'protein_powder', ARRAY['protein','blend'],          75,  6, 12,  400)
+on conflict do nothing;
+
+
+-- 2) 绑定“示例条码”到上述模板（先占位，便于你在演示/测试时立即扫码生效）
+-- 说明：source = 'template'，ref_id 指向 food_templates.id
+do $$
+declare
+  t_whey_default uuid;
+  t_whey_lean    uuid;
+  t_whey_carb    uuid;
+  t_plant        uuid;
+  t_blend        uuid;
+begin
+  select id into t_whey_default from food_templates where name = 'Whey 经典乳清' limit 1;
+  select id into t_whey_lean    from food_templates where name = 'Whey 低脂乳清' limit 1;
+  select id into t_whey_carb    from food_templates where name = 'Whey 高碳乳清' limit 1;
+  select id into t_plant        from food_templates where name = 'Plant 植物蛋白（豌豆/大豆）' limit 1;
+  select id into t_blend        from food_templates where name = 'Blend 混合蛋白' limit 1;
+
+  -- 占位演示条码（EAN/UPC 均可；后续你用真实条码重新 upsert 即可）
+  insert into barcode_food_map (barcode, source, ref_id) values
+    ('9000000000001','template', t_whey_default),
+    ('9000000000002','template', t_whey_lean),
+    ('9000000000003','template', t_whey_carb),
+    ('9000000000004','template', t_plant),
+    ('9000000000005','template', t_blend)
+  on conflict (barcode) do update set source = excluded.source, ref_id = excluded.ref_id;
+end $$;
+
+
+-- 3) （可选）给“经典乳清”再绑定 2~3 个“演示品牌条码”，方便你现场演示品牌差异
+do $$
+declare
+  t_whey_default uuid;
+begin
+  select id into t_whey_default from food_templates where name = 'Whey 经典乳清' limit 1;
+
+  insert into barcode_food_map (barcode, source, ref_id) values
+    ('9000000000011','template', t_whey_default), -- 演示品牌A
+    ('9000000000012','template', t_whey_default)  -- 演示品牌B
+  on conflict (barcode) do update set source = excluded.source, ref_id = excluded.ref_id;
+end $$;
+
+
+之后如果你拿到真实条码，只需要执行一条：
+
+insert into barcode_food_map (barcode, source, ref_id)
+values ('真实条码数字','template',(select id from food_templates where name='Whey 经典乳清' limit 1))
+on conflict (barcode) do update set source=excluded.source, ref_id=excluded.ref_id;
+
+
+或者绑定到用户自定义的 user_foods（将 source 改为 'user_food'，ref_id 写该 user_foods.id 即可）。

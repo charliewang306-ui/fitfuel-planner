@@ -1,0 +1,141 @@
+{
+  "pageTitle": "今日时间轴",
+  "createButton": "新建",
+  "professionalAdvice": {
+    "title": "专业建议",
+    "content": "标准建议：正餐之间约 2–3 小时安排一次小加餐，可以维持较稳定的氨基酸供应，更利于肌肉合成。"
+  },
+  "foodLogs": {
+    "title": "今日饮食记录",
+    "count": "条",
+    "empty": "暂无饮食记录",
+    "unknownFood": "未知食物",
+    "macros": {
+      "protein": "蛋白",
+      "fat": "脂肪",
+      "carbs": "碳水",
+      "fiber": "纤维"
+    },
+    "deleteConfirm": "确定要删除这条食物记录吗？"
+  },
+  "reminders": {
+    "title": "今日提醒",
+    "noReminders": "今日暂无提醒",
+    "missed": {
+      "title": "错过了这次提醒",
+      "message": "没关系！现在就可以补记，或者跳过这次"
+    },
+    "snackRecommendations": "推荐组合",
+    "scheduledAt": "将在 {time} 提醒",
+    "completedAt": "已于 {time} 完成",
+    "delayedUntil": "已推迟至 {time}",
+    "skippedText": "已跳过"
+  },
+  "dialogs": {
+    "editReminder": {
+      "title": "编辑提醒",
+      "description": "修改提醒的时间和类型",
+      "type": "类型",
+      "time": "时间"
+    },
+    "addReminder": {
+      "title": "新建提醒",
+      "description": "创建一个新的时间提醒"
+    },
+    "editFoodLog": {
+      "title": "编辑食物记录",
+      "description": "修改食物的数量（克）",
+      "foodName": "食物名称",
+      "amount": "数量（克）",
+      "notice": "注意：修改数量后，营养值会按比例自动调整",
+      "invalidAmount": "数量无效",
+      "invalidAmountDesc": "请输入有效的数量（大于0）"
+    },
+    "snackRecommendations": {
+      "title": "加餐推荐组合",
+      "description": "选择一个适合的加餐组合"
+    }
+  },
+  "buttons": {
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中...",
+    "create": "创建",
+    "creating": "创建中...",
+    "close": "关闭",
+    "skip": "跳过"
+  },
+  "toast": {
+    "updateFailed": "更新失败",
+    "updateFailedDesc": "无法更新提醒状态",
+    "deleteSuccess": "删除成功",
+    "reminderDeleted": "提醒已删除",
+    "deleteFailed": "删除失败",
+    "reminderDeleteFailed": "无法删除提醒",
+    "createSuccess": "创建成功",
+    "reminderAdded": "新提醒已添加",
+    "createFailed": "创建失败",
+    "reminderCreateFailed": "无法创建提醒",
+    "editSuccess": "修改成功",
+    "foodLogUpdated": "食物记录已更新",
+    "editFailed": "修改失败",
+    "foodLogUpdateFailed": "无法更新食物记录",
+    "foodLogDeleted": "食物记录已删除",
+    "foodLogDeleteFailed": "无法删除食物记录",
+    "postponed": "已推迟",
+    "reminderPostponed": "提醒已推迟",
+    "postponeFailed": "推迟失败",
+    "reminderPostponeFailed": "无法推迟提醒",
+    "skipped": "已跳过",
+    "reminderSkipped": "提醒已跳过",
+    "skipFailed": "跳过失败",
+    "reminderSkipFailed": "无法跳过提醒"
+  },
+  "status": {
+    "pending": "待处理",
+    "completed": "已完成",
+    "countdown": "进行中",
+    "delayed": "已推迟",
+    "postponed": "已推迟",
+    "missed": "已错过",
+    "skipped": "已跳过"
+  },
+  "countdown": {
+    "remaining": "剩余",
+    "overdue": "已超时",
+    "formatHours": "{hours}小时{minutes}分",
+    "formatMinutes": "{minutes}分钟"
+  },
+  "postpone": {
+    "min15": "+15分",
+    "min30": "+30分",
+    "min60": "+60分"
+  },
+  "infoBanner": {
+    "title": "时间是节奏，而非束缚",
+    "description": "提醒错过？没关系！随时可以补记。我们关注的是您全天的营养摄入总量，而不是严格的时间点。您的健康习惯应该灵活而可持续，提醒只是温柔的引导，而非刚性的要求。"
+  },
+  "flexibility": {
+    "badge": "弹性窗口",
+    "window_open": "窗口已开启（可提前完成）",
+    "window_active": "在窗口内",
+    "window_closing": "窗口即将关闭",
+    "window_closed": "窗口已关闭",
+    "early_window": "可提前 {minutes} 分钟完成",
+    "late_window": "还有 {minutes} 分钟窗口时间"
+  },
+  "reminder_types": {
+    "meal": "正餐",
+    "snack": "加餐",
+    "water": "补水提醒",
+    "pre_workout": "训练前",
+    "post_workout": "训练后",
+    "ai_morning": "AI早安建议",
+    "ai_evening": "AI晚间建议"
+  },
+  "ai_reminders": {
+    "view_advice": "查看建议",
+    "catchup": "补记",
+    "complete": "完成"
+  }
+}

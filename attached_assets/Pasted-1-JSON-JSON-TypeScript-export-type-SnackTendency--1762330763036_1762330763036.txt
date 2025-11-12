@@ -1,0 +1,197 @@
+1) 统一返回数据结构（强制 JSON）
+
+目的：不要再用大段文本；只接受严格 JSON。否则就拒收并重试。
+
+TypeScript 接口：
+
+export type SnackTendency = 'Craving Sweet' | 'Craving Crunchy';
+
+export interface SnackRecommendation {
+  tendency: SnackTendency;                 // 'Craving Sweet' | 'Craving Crunchy'
+  title: string;                           // 如：Greek yogurt with berries
+  calories_kcal: number;                   // 50-350 之间的整数
+  protein_g: number;                       // 0-60
+  carbs_g: number;                         // 0-80
+  fat_g: number;                           // 0-40
+  why: string;                             // 1-2 句话解释
+  swaps: string[];                         // 2-3 个替代/变体
+  notes: string[];                         // 1-3 条注意点（如份量、组合建议）
+}
+
+export interface SnackResponse {
+  date: string;                            // YYYY-MM-DD
+  items: SnackRecommendation[];            // 恰好两个：Sweet & Crunchy
+}
+
+2) OpenAI 调用：只要 JSON，不要别的
+
+系统指令（system）：
+
+You are a registered dietitian. Return structured snack recommendations as strict JSON only. No prose, no explanations. Macros must be realistic and consistent. calories_kcal must match 4protein_g + 4carbs_g + 9*fat_g ±5%. Ranges: calories 50-350, protein 0-60g, carbs 0-80g, fat 0-40g. Provide exactly two items: one "Craving Sweet" and one "Craving Crunchy".
+
+用户指令（user）（示例，可把用户信息变量化）：
+
+Generate snack recommendations for:
+- goal: maintain weight
+- daily target: 2000 kcal
+- meal plan already covers ~1650-1750 kcal
+- cuisine preference: Chinese + simple continental
+- avoid: none
+- context: between-meal snacks only (not full meals)
+
+Output format: strict JSON that conforms to this TypeScript type:
+SnackResponse { date: 'YYYY-MM-DD', items: SnackRecommendation[] }
+
+Rules:
+- Provide EXACTLY two items: one with tendency="Craving Sweet", one with tendency="Craving Crunchy".
+- calories_kcal must be between 50 and 350.
+- Ensure calories_kcal ≈ 4*protein_g + 4*carbs_g + 9*fat_g (±5%).
+- Make items feasible in US supermarkets / common Chinese groceries.
+- Keep titles short, swaps 2~3 entries, notes 1~3 entries.
+- NO extra keys, NO comments. JSON ONLY.
+
+
+OpenAI 调用代码（Node/TS）：
+
+import OpenAI from 'openai';
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+export async function getSnackJSON(prompt: string) {
+  const res = await openai.responses.create({
+    model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+    input: prompt,
+    temperature: 0.3,
+    // 强制返回 JSON 对象
+    response_format: { type: 'json_object' },
+  });
+
+  const text = res.output_text; // SDK 会给出纯文本的 JSON 字符串
+  return JSON.parse(text);
+}
+
+3) 后端校验（Zod 验证 + 兜底）
+import { z } from 'zod';
+
+const SnackSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  items: z.array(z.object({
+    tendency: z.enum(['Craving Sweet', 'Craving Crunchy']),
+    title: z.string().min(2).max(80),
+    calories_kcal: z.number().int().min(50).max(350),
+    protein_g: z.number().min(0).max(60),
+    carbs_g: z.number().min(0).max(80),
+    fat_g: z.number().min(0).max(40),
+    why: z.string().min(8),
+    swaps: z.array(z.string()).min(1).max(4),
+    notes: z.array(z.string()).min(0).max(4),
+  })).length(2),
+});
+
+function kcalFromMacros(p: number, c: number, f: number) {
+  return Math.round(p * 4 + c * 4 + f * 9);
+}
+
+export async function generateSnacksOrFallback(userPrompt: string) {
+  try {
+    const data = await getSnackJSON(userPrompt);
+    const parsed = SnackSchema.parse(data);
+
+    // 一致性校验：热量与宏
+    parsed.items = parsed.items.map(item => {
+      const calc = kcalFromMacros(item.protein_g, item.carbs_g, item.fat_g);
+      // 如果相差大于 ±5%，以宏为准重算热量
+      const diff = Math.abs(calc - item.calories_kcal);
+      if (diff > Math.max(5, Math.round(calc * 0.05))) {
+        item.calories_kcal = calc;
+      }
+      // 避免 0 宏导致 0kcal
+      if (item.calories_kcal < 50) {
+        // 简单兜底：补 12g protein + 8g carbs（≈ 100 kcal）
+        item.protein_g = Math.max(item.protein_g, 12);
+        item.carbs_g = Math.max(item.carbs_g, 8);
+        item.fat_g = Math.max(item.fat_g, 2);
+        item.calories_kcal = kcalFromMacros(item.protein_g, item.carbs_g, item.fat_g);
+      }
+      return item;
+    });
+
+    return parsed;
+  } catch (e) {
+    // 彻底兜底：返回一套硬编码可用项，避免 UI 出现 0/2kcal
+    const today = new Date().toISOString().slice(0,10);
+    return {
+      date: today,
+      items: [
+        {
+          tendency: 'Craving Sweet',
+          title: 'Greek yogurt (150g) with blueberries (80g)',
+          calories_kcal: 180,
+          protein_g: 15,
+          carbs_g: 20,
+          fat_g: 4,
+          why: 'Provides protein and natural sweetness to curb sweet cravings.',
+          swaps: ['Low-fat yogurt + strawberries', 'Skyr + sliced apple'],
+          notes: ['Keep added sugar ≤ 5g', 'Add 5–10g nuts if still hungry'],
+        },
+        {
+          tendency: 'Craving Crunchy',
+          title: 'Handful of almonds (25g) + baby carrots (100g)',
+          calories_kcal: 220,
+          protein_g: 7,
+          carbs_g: 12,
+          fat_g: 16,
+          why: 'Crunchy texture with healthy fats for satiety.',
+          swaps: ['Walnuts + cucumber sticks', 'Whole-grain crackers + hummus'],
+          notes: ['Weigh nuts to avoid excess calories'],
+        },
+      ],
+    } as SnackResponse;
+  }
+}
+
+4) 前端渲染修正（确保不会显示 0/2 kcal）
+
+数值显示前做 下限保护：
+
+const kcal = Math.max(50, item.calories_kcal | 0);
+const p = Math.max(0, Math.round(item.protein_g));
+const c = Math.max(0, Math.round(item.carbs_g));
+const f = Math.max(0, Math.round(item.fat_g));
+
+
+如果 kcal < 50 或全部宏为 0，不要渲染，显示“生成失败，请重试”按钮。
+
+5) 触发按钮的文案
+
+把 “AI Snack Recommendation” 的提示改为：
+
+“自动生成两条可执行的零食建议（甜/脆各一），包含热量与三大营养素。若生成异常会自动修复或给出安全兜底项。”
+
+🔧 这次修完后，数据应该像这样（示例）
+{
+  "date": "2025-11-05",
+  "items": [
+    {
+      "tendency": "Craving Sweet",
+      "title": "Greek yogurt (150g) with blueberries (80g)",
+      "calories_kcal": 182,
+      "protein_g": 16,
+      "carbs_g": 21,
+      "fat_g": 3,
+      "why": "Protein + natural sweetness helps manage cravings without a big calorie load.",
+      "swaps": ["Skyr + raspberries", "Low-fat yogurt + apple slices"],
+      "notes": ["Control added sugar ≤ 5g", "Add 5–10g nuts if you still feel hungry"]
+    },
+    {
+      "tendency": "Craving Crunchy",
+      "title": "Almonds (25g) + baby carrots (100g)",
+      "calories_kcal": 219,
+      "protein_g": 7,
+      "carbs_g": 12,
+      "fat_g": 16,
+      "why": "Crunchy texture with healthy fats increases satiety.",
+      "swaps": ["Walnuts + cucumber sticks", "Whole-grain crackers + hummus"],
+      "notes": ["Weigh nuts to avoid excess calories"]
+    }
+  ]
+}

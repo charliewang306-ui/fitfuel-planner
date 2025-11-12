@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "مدير التغذية والترطيب الذكي"
+  },
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "confirm": "تأكيد",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "per100g": "لكل 100 جم",
+    "serving": "حصة",
+    "grams": "جرام",
+    "oz": "أونصة",
+    "ml": "مل",
+    "kcal": "سعرة حرارية",
+    "scoop": "مكيال",
+    "scoops": "مكاييل"
+  },
+  "nutrition": {
+    "protein": "بروتين",
+    "fat": "دهون",
+    "carbs": "كربوهيدرات",
+    "fiber": "ألياف",
+    "water": "ماء",
+    "calories": "سعرات حرارية",
+    "macros": "المغذيات الكبرى"
+  },
+  "nutrients": {
+    "protein": "بروتين",
+    "fat": "دهون",
+    "carbs": "كربوهيدرات",
+    "fiber": "ألياف",
+    "water": "ماء",
+    "calories": "سعرات حرارية",
+    "macros": "المغذيات الكبرى"
+  },
+  "goals": {
+    "bulk": "زيادة الكتلة (اكتساب العضلات)",
+    "maintain": "الحفاظ",
+    "cut": "التنشيف (خسارة الدهون)"
+  },
+  "nav": {
+    "dashboard": "لوحة المعلومات",
+    "log": "سجل",
+    "timeline": "الجدول الزمني",
+    "water": "ماء",
+    "settings": "الإعدادات"
+  },
+  "subscription": {
+    "free": "مجاني",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "الترقية إلى Plus",
+  "upgradePro": "الترقية إلى PRO",
+  "features": {
+    "goal_cut": "وضع التنشيف (خسارة الدهون)",
+    "goal_bulk": "وضع زيادة الكتلة (اكتساب العضلات)",
+    "custom_macros": "أهداف ماكرو مخصصة",
+    "timeline_unlimited": "أحداث جدول زمني غير محدودة",
+    "timeline_edit": "تحرير أحداث الجدول الزمني",
+    "timeline_advance_notice": "تذكيرات إشعار مسبق",
+    "barcode_scan": "مسح الباركود",
+    "usda_search": "قاعدة بيانات الأغذية USDA",
+    "usda_unlimited": "عمليات بحث USDA غير محدودة",
+    "protein_powder": "تتبع مسحوق البروتين",
+    "ai_coach": "مدرب التغذية بالذكاء الاصطناعي",
+    "ai_unlimited": "اقتراحات ذكاء اصطناعي غير محدودة",
+    "smart_suggestions": "اقتراحات وجبات ذكية",
+    "history_unlimited": "سجل غير محدود",
+    "weekly_stats": "إحصائيات أسبوعية",
+    "export_pdf": "تصدير إلى PDF",
+    "cloud_sync": "المزامنة السحابية",
+    "water_history": "سجل الماء",
+    "themes": "سمات مخصصة",
+    "multi_language": "دعم متعدد اللغات",
+    "no_ads": "تجربة خالية من الإعلانات"
+  },
+  "paywall": {
+    "requiresPlan": "تتطلب هذه الميزة خطة {{plan}}",
+    "unlockFeatures": "فتح ميزات {{plan}}",
+    "proPricing": "تجربة مجانية لمدة 7 أيام • 9.99 دولار/شهر",
+    "plusPricing": "4.99 دولار/شهر"
+  }
+}

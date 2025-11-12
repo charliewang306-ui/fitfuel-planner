@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "Gestor Inteligente de Nutrição e Hidratação"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "add": "Adicionar",
+    "confirm": "Confirmar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "per100g": "por 100g",
+    "serving": "porção",
+    "grams": "gramas",
+    "oz": "oz",
+    "ml": "ml",
+    "kcal": "kcal",
+    "scoop": "medida",
+    "scoops": "medidas"
+  },
+  "nutrition": {
+    "protein": "Proteína",
+    "fat": "Gordura",
+    "carbs": "Carboidratos",
+    "fiber": "Fibra",
+    "water": "Água",
+    "calories": "Calorias",
+    "macros": "Macros"
+  },
+  "nutrients": {
+    "protein": "Proteína",
+    "fat": "Gordura",
+    "carbs": "Carboidratos",
+    "fiber": "Fibra",
+    "water": "Água",
+    "calories": "Calorias",
+    "macros": "Macros"
+  },
+  "goals": {
+    "bulk": "Ganho de Massa (Ganhar Músculo)",
+    "maintain": "Manter",
+    "cut": "Definição (Perder Gordura)"
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "log": "Registrar",
+    "timeline": "Linha do Tempo",
+    "water": "Água",
+    "settings": "Configurações"
+  },
+  "subscription": {
+    "free": "Grátis",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Atualizar para Plus",
+  "upgradePro": "Atualizar para PRO",
+  "features": {
+    "goal_cut": "Modo Definição (Perda de Gordura)",
+    "goal_bulk": "Modo Ganho de Massa (Ganho Muscular)",
+    "custom_macros": "Metas de Macros Personalizadas",
+    "timeline_unlimited": "Eventos de Linha do Tempo Ilimitados",
+    "timeline_edit": "Editar Eventos da Linha do Tempo",
+    "timeline_advance_notice": "Lembretes com Aviso Prévio",
+    "barcode_scan": "Leitura de Código de Barras",
+    "usda_search": "Base de Dados de Alimentos USDA",
+    "usda_unlimited": "Buscas USDA Ilimitadas",
+    "protein_powder": "Rastreamento de Proteína em Pó",
+    "ai_coach": "Coach de Nutrição IA",
+    "ai_unlimited": "Sugestões IA Ilimitadas",
+    "smart_suggestions": "Sugestões Inteligentes de Refeições",
+    "history_unlimited": "Histórico Ilimitado",
+    "weekly_stats": "Estatísticas Semanais",
+    "export_pdf": "Exportar para PDF",
+    "cloud_sync": "Sincronização na Nuvem",
+    "water_history": "Histórico de Água",
+    "themes": "Temas Personalizados",
+    "multi_language": "Suporte Multi-Idioma",
+    "no_ads": "Experiência sem Anúncios"
+  },
+  "paywall": {
+    "requiresPlan": "Este recurso requer o plano {{plan}}",
+    "unlockFeatures": "Desbloquear Recursos {{plan}}",
+    "proPricing": "7 dias de teste grátis • $9,99/mês",
+    "plusPricing": "$4,99/mês"
+  }
+}

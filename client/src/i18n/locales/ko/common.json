@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "스마트 영양 및 수분 관리"
+  },
+  "common": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "add": "추가",
+    "confirm": "확인",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "per100g": "100g당",
+    "serving": "인분",
+    "grams": "그램",
+    "oz": "온스",
+    "ml": "밀리리터",
+    "kcal": "킬로칼로리",
+    "scoop": "스쿱",
+    "scoops": "스쿱"
+  },
+  "nutrition": {
+    "protein": "단백질",
+    "fat": "지방",
+    "carbs": "탄수화물",
+    "fiber": "섬유질",
+    "water": "수분",
+    "calories": "칼로리",
+    "macros": "다량영양소"
+  },
+  "nutrients": {
+    "protein": "단백질",
+    "fat": "지방",
+    "carbs": "탄수화물",
+    "fiber": "섬유질",
+    "water": "수분",
+    "calories": "칼로리",
+    "macros": "다량영양소"
+  },
+  "goals": {
+    "bulk": "벌크업 (근육 증가)",
+    "maintain": "유지",
+    "cut": "컷팅 (체지방 감소)"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "log": "기록",
+    "timeline": "타임라인",
+    "water": "수분",
+    "settings": "설정"
+  },
+  "subscription": {
+    "free": "무료",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Plus로 업그레이드",
+  "upgradePro": "PRO로 업그레이드",
+  "features": {
+    "goal_cut": "컷팅 모드 (체지방 감소)",
+    "goal_bulk": "벌크업 모드 (근육 증가)",
+    "custom_macros": "맞춤 매크로 목표",
+    "timeline_unlimited": "무제한 타임라인 이벤트",
+    "timeline_edit": "타임라인 이벤트 편집",
+    "timeline_advance_notice": "사전 알림",
+    "barcode_scan": "바코드 스캔",
+    "usda_search": "USDA 식품 데이터베이스",
+    "usda_unlimited": "무제한 USDA 검색",
+    "protein_powder": "프로틴 파우더 추적",
+    "ai_coach": "AI 영양 코치",
+    "ai_unlimited": "무제한 AI 제안",
+    "smart_suggestions": "스마트 식사 제안",
+    "history_unlimited": "무제한 기록",
+    "weekly_stats": "주간 통계",
+    "export_pdf": "PDF 내보내기",
+    "cloud_sync": "클라우드 동기화",
+    "water_history": "수분 섭취 기록",
+    "themes": "맞춤 테마",
+    "multi_language": "다국어 지원",
+    "no_ads": "광고 없는 경험"
+  },
+  "paywall": {
+    "requiresPlan": "이 기능은 {{plan}} 플랜이 필요합니다",
+    "unlockFeatures": "{{plan}} 기능 잠금 해제",
+    "proPricing": "7일 무료 체험 • $9.99/월",
+    "plusPricing": "$4.99/월"
+  }
+}

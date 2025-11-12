@@ -1,0 +1,153 @@
+指令：调整“AI三餐菜单”页面的布局与按钮
+
+页面目标（AI三餐菜单 / Meals Page）：
+
+顶部只保留一个按钮：“重新生成”（用于重算三餐菜单）。
+
+删除顶部的 “一键记录所有食物” 按钮。
+
+将 “一键补足营养”（Fill Nutrition Gaps）按钮与其补充建议模块一起移动到三餐区块下方。
+
+三餐（早餐/午餐/晚餐）仍按原先顺序展示。
+
+保持 “AI零食推荐” 按钮在当前页面顶区（与“重新生成”同一行或右侧），不改动其逻辑。
+
+视觉节奏：主餐在上，补营养在下，并在两者之间放一条浅色分割线与适当的空白。
+
+一、定位与命名（示例，按实际代码对应）
+
+页面组件：pages/meals/index.tsx 或 src/app/meals/page.tsx（或项目中同名文件）。
+
+关键组件（若命名不同，请以功能匹配为准）：
+
+HeaderActions（顶部按钮区域）
+
+RecordAllButton（一键记录所有食物，需删除）
+
+RegenerateMenuButton（重新生成，保留）
+
+SnackRecommendButton（AI零食推荐，保留）
+
+MealsSection（包含 Breakfast/Lunch/Dinner 三块）
+
+FillNutritionGapsButton（一键补足营养，需下移）
+
+NutritionGapsPanel（补营养建议卡片，需下移）
+
+二、操作步骤（实现要点）
+
+删除“⼀键记录所有食物”按钮
+
+从 HeaderActions 中移除 RecordAllButton 的 JSX/组件引用。
+
+删除相关的 click handler、import、hook，以及任何“批量写入所有餐食到日志”的逻辑与埋点。
+
+若该逻辑被其他地方复用，请保留底层方法，仅移除此页面的 UI 入口。
+
+整理顶部按钮
+
+HeaderActions 只保留：
+
+RegenerateMenuButton（主按钮/次按钮均可，但推荐“次要样式”，避免喧宾夺主）
+
+SnackRecommendButton（与“重新生成”同一行右侧；手机端并排/换行均可）
+
+保证这两个按钮在移动端不会拥挤：为容器设 gap: 8–12px，必要时允许自动换行。
+
+移动“一键补足营养”到三餐下方
+
+在 MealsSection（三餐列表）之后，新增一个区块：
+
+<Divider aria-label="meals-to-supplement-divider" />
+<section id="supplement-section" aria-label="补足营养">
+  <FillNutritionGapsButton variant="primary" />
+  <NutritionGapsPanel />
+</section>
+
+
+FillNutritionGapsButton 使用绿色主按钮（与全站主行动一致），保持「点击后生成/刷新下方 NutritionGapsPanel」的逻辑不变。
+
+初次进入页面时，NutritionGapsPanel 可为空或显示轻提示（“点击上方按钮，生成今日补充建议”）。
+
+空白与层级
+
+在 MealsSection 和 supplement-section 之间加入 Divider + margin-top: 16–24px，supplement-section 内部按钮与卡片之间 gap: 12–16px。
+
+不要让“补营养卡片”抢走焦点，卡片标题用中灰文字，主色只留给按钮。
+
+可访问性/文案
+
+RegenerateMenuButton 文案：“重新生成”（aria-label: “重新生成三餐菜单”）
+
+FillNutritionGapsButton 文案：“一键补足营养”（aria-label: “根据今日剩余营养目标生成补充建议”）
+
+删除“⼀键记录所有食物”后，如有任何文案/提示提及该功能，一并清理。
+
+逻辑不变的前提
+
+FillNutritionGapsButton 仍基于今日剩余宏（proteinLeft/carbsLeft/fatLeft/fiberLeft/hydrationLeft）计算建议。
+
+MealsSection 的三餐生成逻辑、时间点、营养统计不做功能性改动。
+
+三、示例代码片段（伪代码/参考改法）
+// HeaderActions.tsx （或所在文件）
+// 1) 移除 RecordAllButton
+// import RecordAllButton from '@/components/RecordAllButton'; // <-- 删除
+import RegenerateMenuButton from '@/components/RegenerateMenuButton';
+import SnackRecommendButton from '@/components/SnackRecommendButton';
+
+export function HeaderActions() {
+  return (
+    <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-8">
+        <h2 className="text-lg font-semibold">今日AI推荐</h2>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <RegenerateMenuButton variant="secondary" />
+        <SnackRecommendButton />
+      </div>
+    </div>
+  );
+}
+
+// MealsPage.tsx （或页面主文件）
+import MealsSection from '@/components/MealsSection';
+import Divider from '@/components/ui/Divider';
+import FillNutritionGapsButton from '@/components/FillNutritionGapsButton';
+import NutritionGapsPanel from '@/components/NutritionGapsPanel';
+
+export default function MealsPage() {
+  return (
+    <main className="container px-4 py-4 space-y-16">
+      <HeaderActions />
+
+      {/* 三餐主结构 */}
+      <MealsSection />
+
+      {/* 分割与补营养区块 */}
+      <Divider aria-label="meals-to-supplement-divider" />
+      <section id="supplement-section" aria-label="补足营养" className="space-y-4">
+        <FillNutritionGapsButton variant="primary" fullWidthOnMobile />
+        <NutritionGapsPanel />
+      </section>
+    </main>
+  );
+}
+
+四、验收标准（必须全部满足）
+
+ 页面顶部仅显示：重新生成、AI零食推荐 两个按钮；“一键记录所有食物”按钮已移除。
+
+ 早餐/午餐/晚餐呈现在上半部分，布局与原来一致。
+
+ “一键补足营养”按钮与补营养建议卡片整体出现在三餐下面；点击按钮会刷新下方卡片内容。
+
+ 三餐与补营养区块之间有清晰的分割线与空白，视觉层级清楚。
+
+ 移动端按钮不挤，能自动换行，点击区域≥44px。
+
+ 不再出现任何提及 “一键记录所有食物” 的 UI/提示/埋点。
+
+ 现有统计（卡路里与宏量营养合计/进度）不受本次改动影响。
+
+说明：如项目使用的是 Vue/Svelte/原生 DOM，请按同名区域与按钮职能完成等效调整；命名不一致时，以“功能匹配”优先。

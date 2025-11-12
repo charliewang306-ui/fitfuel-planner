@@ -1,0 +1,61 @@
+Continue full development of FitMeal. Do not publish until all tasks below are completed.
+
+=== BUSINESS & PAYWALL ===
+1️⃣ Add subscription system:
+   - Pricing: Monthly $9.99 USD, 7-day Free Trial
+   - Restore Purchases option
+   - Connect to Stripe Web Payments and prepare mobile IAP structure for future apps
+2️⃣ PRO feature locking:
+   - Barcode Scan → Lock for free users
+   - Unlimited AI Recommendations → Lock
+   - Full Nutrition Database → PRO only, Free users see top 10 foods only
+   - Historical logs beyond 7 days → PRO only
+3️⃣ Subscription Upgrade UI page:
+   - Title: “解锁 PRO — 科学增肌/减脂 不走弯路”
+   - Features comparison table: Free vs PRO
+   - CTA button: “立即解锁 PRO”
+   - Success screen after subscription
+
+=== USER EXPERIENCE IMPROVEMENTS ===
+4️⃣ Add onboarding “Goal Type” (增肌 / 减脂 / 维持):
+   - Clearly show how protein/fat/carb target is recalculated
+5️⃣ Improve AI nutrition formula:
+   - Muscle Gain: Protein 1.8~2.2 g/kg, Deficit/Surplus correct calculation
+   - Fat Loss: Higher protein + calorie deficit
+   - Show summary text on Dashboard (e.g., 增肌模式进行中)
+6️⃣ Add manual editing for timeline reminders:
+   - Users can tap any reminder → edit/delete
+   - Add button “新增提醒”
+7️⃣ Enable real push notifications for meals & hydration
+
+=== FOOD & DATABASE ===
+8️⃣ Barcode scanning full implementation:
+   - Camera access + lookup in nutrition table
+   - If unknown barcode → fallback to manual input modal
+9️⃣ Add weight input modal for each food item:
+   - Unit selector: g ↔ oz ↔ kg (auto convert macros)
+10️⃣ Add food search by Chinese & English keywords
+
+=== HYDRATION EXPERIENCE ===
+1️⃣1️⃣ Water reminder and bottle animation polish:
+   - Smooth fill animation
+   - Shake effect when almost full
+   - Push reminder based on personalized hydration gaps
+
+=== UI/UX UPGRADE ===
+1️⃣2️⃣ New premium App UI design style:
+   - Round card + shadow + glass blur style (highly modern)
+   - Add theme switching (Light/Dark)
+   - New bottom bar icons animations (bounce on tap)
+   - Dashboard macro bars: thicker + gradient colors
+   - Replace fonts with modern UI font
+   - Settings page redesign (Account, PRO, Notifications, Language)
+
+=== QUALITY & DEPLOYMENT ===
+13️⃣ Ensure mobile-first UI performance
+14️⃣ Fix all build errors automatically
+15️⃣ Maintain current Chinese as default UI (prepare for English toggle)
+16️⃣ After finishing all tasks, run full test and confirm everything working
+17️⃣ Do NOT publish automatically — let the user review first.
+
+When finished, respond: ✅ All tasks completed successfully.

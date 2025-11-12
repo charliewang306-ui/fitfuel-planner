@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "स्मार्ट पोषण और हाइड्रेशन प्रबंधक"
+  },
+  "common": {
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएँ",
+    "edit": "संपादित करें",
+    "add": "जोड़ें",
+    "confirm": "पुष्टि करें",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफल",
+    "per100g": "प्रति 100g",
+    "serving": "सर्विंग",
+    "grams": "ग्राम",
+    "oz": "औंस",
+    "ml": "मिली",
+    "kcal": "किलो कैलोरी",
+    "scoop": "स्कूप",
+    "scoops": "स्कूप"
+  },
+  "nutrition": {
+    "protein": "प्रोटीन",
+    "fat": "वसा",
+    "carbs": "कार्बोहाइड्रेट",
+    "fiber": "फाइबर",
+    "water": "पानी",
+    "calories": "कैलोरी",
+    "macros": "मैक्रोज़"
+  },
+  "nutrients": {
+    "protein": "प्रोटीन",
+    "fat": "वसा",
+    "carbs": "कार्बोहाइड्रेट",
+    "fiber": "फाइबर",
+    "water": "पानी",
+    "calories": "कैलोरी",
+    "macros": "मैक्रोज़"
+  },
+  "goals": {
+    "bulk": "बल्क (मांसपेशियाँ बढ़ाएं)",
+    "maintain": "बनाए रखें",
+    "cut": "कट (वसा घटाएं)"
+  },
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "log": "लॉग",
+    "timeline": "टाइमलाइन",
+    "water": "पानी",
+    "settings": "सेटिंग्स"
+  },
+  "subscription": {
+    "free": "मुफ़्त",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Plus में अपग्रेड करें",
+  "upgradePro": "PRO में अपग्रेड करें",
+  "features": {
+    "goal_cut": "कट मोड (वसा कम करें)",
+    "goal_bulk": "बल्क मोड (मांसपेशियाँ बढ़ाएं)",
+    "custom_macros": "कस्टम मैक्रो लक्ष्य",
+    "timeline_unlimited": "असीमित टाइमलाइन इवेंट",
+    "timeline_edit": "टाइमलाइन इवेंट संपादित करें",
+    "timeline_advance_notice": "अग्रिम सूचना रिमाइंडर",
+    "barcode_scan": "बारकोड स्कैनिंग",
+    "usda_search": "USDA फूड डेटाबेस",
+    "usda_unlimited": "असीमित USDA खोज",
+    "protein_powder": "प्रोटीन पाउडर ट्रैकिंग",
+    "ai_coach": "AI पोषण कोच",
+    "ai_unlimited": "असीमित AI सुझाव",
+    "smart_suggestions": "स्मार्ट भोजन सुझाव",
+    "history_unlimited": "असीमित इतिहास",
+    "weekly_stats": "साप्ताहिक आंकड़े",
+    "export_pdf": "PDF में निर्यात करें",
+    "cloud_sync": "क्लाउड सिंक",
+    "water_history": "पानी का इतिहास",
+    "themes": "कस्टम थीम",
+    "multi_language": "बहुभाषा समर्थन",
+    "no_ads": "विज्ञापन-मुक्त अनुभव"
+  },
+  "paywall": {
+    "requiresPlan": "इस फीचर के लिए {{plan}} प्लान की आवश्यकता है",
+    "unlockFeatures": "{{plan}} फीचर अनलॉक करें",
+    "proPricing": "7 दिन का मुफ्त ट्रायल • $9.99/महीना",
+    "plusPricing": "$4.99/महीना"
+  }
+}

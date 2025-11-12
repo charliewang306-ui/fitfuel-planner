@@ -1,0 +1,48 @@
+{
+  "title": "時間軸",
+  "today": "今日",
+  "reminders": "提醒",
+  "noReminders": "今日無提醒",
+  "addReminder": "新增提醒",
+  "editReminder": "編輯提醒",
+  "deleteReminder": "刪除提醒",
+  "time": "時間",
+  "status": {
+    "pending": "待處理",
+    "completed": "已完成",
+    "overdue": "已逾時",
+    "missed": "錯過",
+    "postponed": "已延後",
+    "skipped": "已跳過"
+  },
+  "countdown": {
+    "remaining": "剩餘",
+    "overdue": "已逾時",
+    "hours": "{count}小時",
+    "minutes": "{count}分鐘"
+  },
+  "postpone": {
+    "title": "延後",
+    "min15": "+15分鐘",
+    "min30": "+30分鐘",
+    "min60": "+60分鐘"
+  },
+  "markCompleted": "標記為完成",
+  "scheduledTime": "排定時間",
+  "description": "描述",
+  "infoBanner": {
+    "title": "時間是節奏，而非束縛",
+    "description": "提醒錯過？沒關係！隨時可以補記。我們關注的是您全天的營養攝取總量，而非嚴格的時間點。您的健康習慣應該靈活而可持續，提醒只是溫和的引導，而非剛性的要求。"
+  },
+  "catchup": {
+    "button": "補記",
+    "successTitle": "補記成功",
+    "successDescription": "已補記此次提醒"
+  },
+  "actions": {
+    "complete": "完成",
+    "postpone": "延後",
+    "skip": "跳過",
+    "delete": "刪除"
+  }
+}

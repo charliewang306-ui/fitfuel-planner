@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "Gestor Inteligente de Nutrición e Hidratación"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "confirm": "Confirmar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "per100g": "por 100g",
+    "serving": "porción",
+    "grams": "gramos",
+    "oz": "oz",
+    "ml": "ml",
+    "kcal": "kcal",
+    "scoop": "dosificador",
+    "scoops": "dosificadores"
+  },
+  "nutrition": {
+    "protein": "Proteína",
+    "fat": "Grasa",
+    "carbs": "Carbohidratos",
+    "fiber": "Fibra",
+    "water": "Agua",
+    "calories": "Calorías",
+    "macros": "Macros"
+  },
+  "nutrients": {
+    "protein": "Proteína",
+    "fat": "Grasa",
+    "carbs": "Carbohidratos",
+    "fiber": "Fibra",
+    "water": "Agua",
+    "calories": "Calorías",
+    "macros": "Macros"
+  },
+  "goals": {
+    "bulk": "Volumen (Ganar Músculo)",
+    "maintain": "Mantener",
+    "cut": "Definición (Perder Grasa)"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "log": "Registrar",
+    "timeline": "Cronología",
+    "water": "Agua",
+    "settings": "Ajustes"
+  },
+  "subscription": {
+    "free": "Gratis",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Actualizar a Plus",
+  "upgradePro": "Actualizar a PRO",
+  "features": {
+    "goal_cut": "Modo Definición (Pérdida de Grasa)",
+    "goal_bulk": "Modo Volumen (Ganancia Muscular)",
+    "custom_macros": "Objetivos de Macros Personalizados",
+    "timeline_unlimited": "Eventos de Línea de Tiempo Ilimitados",
+    "timeline_edit": "Editar Eventos de Línea de Tiempo",
+    "timeline_advance_notice": "Recordatorios con Aviso Previo",
+    "barcode_scan": "Escaneo de Códigos de Barras",
+    "usda_search": "Base de Datos de Alimentos USDA",
+    "usda_unlimited": "Búsquedas USDA Ilimitadas",
+    "protein_powder": "Seguimiento de Proteína en Polvo",
+    "ai_coach": "Entrenador de Nutrición IA",
+    "ai_unlimited": "Sugerencias IA Ilimitadas",
+    "smart_suggestions": "Sugerencias Inteligentes de Comidas",
+    "history_unlimited": "Historial Ilimitado",
+    "weekly_stats": "Estadísticas Semanales",
+    "export_pdf": "Exportar a PDF",
+    "cloud_sync": "Sincronización en la Nube",
+    "water_history": "Historial de Agua",
+    "themes": "Temas Personalizados",
+    "multi_language": "Soporte Multiidioma",
+    "no_ads": "Experiencia sin Anuncios"
+  },
+  "paywall": {
+    "requiresPlan": "Esta función requiere el plan {{plan}}",
+    "unlockFeatures": "Desbloquear Funciones {{plan}}",
+    "proPricing": "Prueba gratuita de 7 días • $9.99/mes",
+    "plusPricing": "$14.99/mes"
+  }
+}

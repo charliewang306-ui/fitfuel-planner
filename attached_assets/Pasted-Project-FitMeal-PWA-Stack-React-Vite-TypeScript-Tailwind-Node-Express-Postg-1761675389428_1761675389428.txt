@@ -1,0 +1,58 @@
+Project: FitMeal – 水+营养智能管家（PWA）
+Stack: React + Vite + TypeScript + Tailwind + Node/Express + PostgreSQL
+Integrations: PostgreSQL (Replit), Web Push/Local Notifications, Camera (Barcode)
+
+Core tables:
+- UserProfile(id, weight_lb, goal, activity, wake_time, sleep_time, unit_pref)
+- DailyTargets(date, user_id, kcal, protein_g, fat_g, carbs_g, fiber_g, water_oz)
+- FoodItem(id, name, brand, per_unit_type[per100g|perserving], grams_per_serving?,
+           kcal_100g, protein_100g, fat_100g, carbs_100g, fiber_100g, sodium_100g, tags[])
+- FoodBarcode(gtin, food_id)
+- FoodLog(id, user_id, datetime, food_id, amount_g, kcal, protein_g, fat_g, carbs_g, fiber_g)
+- WaterLog(id, user_id, datetime, amount_oz)
+- CheckinWeight(user_id, date, weight_lb)
+
+Key features (V1):
+1) 目标配额引擎（后端 /api/targets/generate）:
+   - kcal = lb * (14|16|18) 再按 cut(-300~500) / bulk(+200~400) 调整
+   - protein = lb * 0.8 (体脂高可用目标体重)；fat = lb * 0.35；carb=余额法；water=lb*0.6 oz；fiber=≥14g/1000kcal
+2) 记录页：
+   - 选择食物 → 数量输入（支持 g/oz/kg）→ 即时显示 kcal/P/F/C/纤维（公式基于每100g）
+   - 底部合计与“剩余”实时更新
+3) 饮水页：
+   - 大水瓶容器（进度动画），显示 已喝/目标(oz)，快捷 +8 / +12 / 自定义
+4) 一键补足推荐（前端调用 /api/suggest）：
+   - 输入剩余 {P,F,C,kcal}，输出 2–3 组（蛋白+主食±脂肪/蔬菜），含份量和偏差
+5) 扫码录入：
+   - 前端用 zxing-js or @zxing/library 调摄像头读取 UPC/EAN/QR
+   - 命中 FoodBarcode → 回填 FoodItem；未命中走“拍营养表 OCR（占位接口）/手动新增”
+6) 提醒+倒计时（PWA）：
+   - Local Notifications + 倒计时条；可推迟 15/30/60 分；Web Push 预留 service worker
+7) 首页看板：
+   - 卡路里环；蛋白/脂肪/碳水/纤维/饮水进度条；下方“🪄一键补足”入口
+8) 基础种子库：
+   - 50 条常见食物（鸡胸/牛肉/鸡蛋/米饭/燕麦/酸奶/乳清/坚果/油/蔬果等）
+
+APIs:
+- GET /api/targets/today
+- POST /api/foodlog (food_id, amount_g | amount_unit+value) → 计算并入库
+- POST /api/waterlog (amount_oz)
+- GET /api/foods/search?q=
+- POST /api/foods (自定义食物)
+- GET /api/barcode/:gtin → FoodItem
+- POST /api/suggest (remain{P,F,C,kcal}) → 推荐组合
+
+Utilities (frontend):
+- toGrams(value, unit g|oz|kg); 1 oz=28.3495 g
+- calcNutritionPerIntake(grams, per100g)
+- 单位显示切换仅影响 UI，内部一律存 g / oz
+
+PWA:
+- 注册 service worker；安装提示；Web Push 占位（VAPID 以后配置）
+
+Auth:
+- 先用简易会话（匿名用户 id 存 localStorage），为后续 OAuth 预留
+
+Build goals:
+- 可运行的 V1 全流程：录入→显示营养→看板剩余→一键补足→饮水瓶→提醒（本地通知）
+- 提供 .env.example（数据库 URL 等）

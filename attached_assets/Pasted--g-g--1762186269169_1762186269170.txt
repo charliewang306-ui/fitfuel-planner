@@ -1,0 +1,206 @@
+🔧 指令：在食谱/食材录入中加入 “有秤/没秤都能记” 的多单位与估算
+目标
+
+为每个食材提供三种输入模式，最终都换算成 克(g) 保存并计算营养：
+
+克重（g）：有厨房秤直接输入数字。
+
+家用量具/单位：杯(cup)、汤匙(tbsp)、茶匙(tsp)、片(slice)、个(piece) 等。
+
+手掌估算：拳头(Fist)、手掌(Palm 手掌去指)、拇指(Thumb)、捧手(Cupped-hand) 等。
+
+任何模式都实时显示：克(g)、千卡(kcal)、P/F/C，并更新总计。
+
+一、UI/交互
+
+在“每个食材行”右侧增加 数量输入 与 单位选择 两个控件：
+
+数量：数字输入框（0.1 步进，最小 0）。
+
+单位：下拉选择，分组显示：
+
+「重量」：g（默认）
+
+「量具」：cup / tbsp / tsp / piece / slice …
+
+「手掌估算」：fist / palm / thumb / cupped_hand
+
+单位旁放一个 “≈ 显示换算” 的小提示，hover 或点击展开“此单位≈多少克”的说明。
+
+允许“自定义单位”按钮：用户可为该食材保存一个自定义单位名称 + 克重（如“1碗米饭 = 220g”），下次自动出现在该食材的单位下拉里。
+
+食材行在数量/单位变化时，实时重算该行及顶部总览（kcal、P/F/C）。
+
+二、数据结构（若已有表，仅补充字段）
+
+在前端维护一个单位换算表（内置 + 用户自定义）；在数据库为用户自定义单位建表：
+
+-- 用户自定义单位（可选，如果当前项目已使用 Supabase）
+create table if not exists user_food_units (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  food_key text not null,         -- 食材唯一标识：如 'chicken_breast_raw'
+  unit_name text not null,        -- 如 '一碗' 或 'big bowl'
+  grams_per_unit numeric not null, -- 每单位对应克重
+  created_at timestamptz default now()
+);
+
+-- RLS：仅本人可读写
+alter table user_food_units enable row level security;
+-- 省略常规 RLS 策略…（照你项目现有写法）
+
+三、换算规则（核心算法）
+1) 基础等式
+实际克重(g) = 数量 × 单位换算的 grams_per_unit
+
+
+若单位是 g，则 grams_per_unit = 1。
+
+2) 营养换算
+
+已知 每100g 的营养（kcal/P/F/C），则：
+
+kcal = (实际克重 / 100) * kcal_per_100g
+P/F/C 同理
+
+3) 单位换算表（内置映射）
+
+优先使用食材特定密度（如 “1 cup cooked rice ≈ 158g”）。
+
+若未知，回退到通用默认（如 “1 cup 一般切块食物 ≈ 120g”）。
+
+在前端放一个内置 JSON（可扩展），示例结构如下（只列一部分；代码中可补充更多常见项）：
+
+// foodUnits.ts
+export const DEFAULT_UNIT_MAP = {
+  __generic__: {
+    // 通用默认（无明确食材映射时使用）
+    cup: 120,           // 1 cup 一般食材（切块/碎/熟食）≈120g
+    tbsp: 15,           // 1 汤匙 ≈ 15g
+    tsp: 5,             // 1 茶匙 ≈ 5g
+    piece: 60,          // 1 个 ≈ 60g（通用）
+    slice: 30,          // 1 片 ≈ 30g（通用）
+    fist: 180,          // 1 拳头体积 ≈ 180g（蔬菜/饭类）
+    palm: 100,          // 1 手掌(去指) ≈ 100g（熟肉/主菜）
+    thumb: 15,          // 1 拇指 ≈ 15g（坚果/黄油/酱类）
+    cupped_hand: 40     // 1 捧手 ≈ 40g（坚果/干果/零食）
+  },
+  rice_cooked: {  // 熟米饭
+    cup: 158, piece: 220 /* 碗 */, fist: 180
+  },
+  chicken_breast_cooked: {
+    palm: 120, piece: 120
+  },
+  beef_steak_cooked: {
+    palm: 130
+  },
+  broccoli_cooked: {
+    cup: 156, fist: 90
+  },
+  olive_oil: {
+    tbsp: 14, tsp: 4.5, thumb: 12
+  },
+  egg_raw: {
+    piece: 50
+  },
+  bread_slice: {
+    slice: 28
+  },
+  tomato_raw: {
+    cup: 180, piece: 120
+  }
+  // …可继续补充常见 80+ 项（米饭、面条、燕麦、牛奶、酸奶、土豆、香蕉等）
+};
+
+
+识别 food_key 的逻辑：
+
+优先食材库里的标准化 key（如你现有数据库字段）；
+
+若用户自由输入文本，用你已有的 NLP/模糊匹配到标准食材；匹配失败则用 __generic__。
+
+4) 手掌估算法提示文案（内置）
+
+Fist（拳头）≈ 一杯蔬菜/饭的体积 → 约 150–200g
+
+Palm（手掌去指）≈ 一片肉排/鸡胸 → 约 100–130g
+
+Thumb（拇指）≈ 一小段脂肪/酱 → 约 10–15g
+
+Cupped hand（捧手）≈ 一小把坚果/干果 → 约 30–50g
+
+在 UI 上给气泡说明；并允许“调整该食材的估算”为自定义单位保存。
+
+四、前端实现要点
+
+单位下拉变化 → 读取 grams_per_unit：
+
+查找 用户自定义（user_food_units）
+
+命中则用自定义；未命中再查 DEFAULT_UNIT_MAP[food_key]
+
+仍无 → 用 DEFAULT_UNIT_MAP.generic
+
+数量或单位变化 → 即刻计算 实际克重 → 用每 100g 营养表实时算行内 kcal/P/F/C → 更新顶部总计。
+
+“自定义单位”弹窗：输入 unit_name + grams_per_unit，保存到 user_food_units 并注入当前食材单位下拉（无需刷新）。
+
+批量记录：写入数据库时存 实际克重(g) 与 最终 kcal/P/F/C；并在条目中记录用户选择的单位与数量，便于回看。
+
+五、样例伪代码（前端计算）
+function resolveGramsPerUnit(foodKey: string, unit: string, userUnitsMap: Record, defaultMap = DEFAULT_UNIT_MAP) {
+  // 1) 用户自定义优先
+  const custom = userUnitsMap?.[foodKey]?.[unit];
+  if (custom) return custom;
+
+  // 2) 食材特定
+  const foodMap = defaultMap[foodKey];
+  if (foodMap && foodMap[unit]) return foodMap[unit];
+
+  // 3) 通用
+  return defaultMap.__generic__[unit] ?? 1;
+}
+
+function computeNutrition({ grams, per100 }: { grams: number, per100: { kcal:number, p:number, f:number, c:number }}) {
+  const factor = grams / 100;
+  return {
+    kcal: +(per100.kcal * factor).toFixed(1),
+    p: +(per100.p * factor).toFixed(1),
+    f: +(per100.f * factor).toFixed(1),
+    c: +(per100.c * factor).toFixed(1),
+  };
+}
+
+六、验证用例（完成的判定标准）
+
+选择“tbsp 橄榄油 ×2” → 自动换算为 ~28g → kcal≈ 2×(每14g的热量)；切换为 g 后值一致。
+
+“1 palm 鸡胸” 与 “120g 鸡胸” 结果基本一致（允许±10%）。
+
+用户新增自定义单位“1碗米饭=220g”，保存后单位下拉出现“1碗”，选择×1 → g=220。
+
+同一道菜不同输入模式（g / cup / palm）顶层总热量一致（允许因为四舍五入出现±1–2 kcal）。
+
+批量记录写入的为最终克重+营养；回看明细能看到“单位、数量、换算克重”。
+
+七、文案（中文）
+
+单位选择标签：单位
+
+自定义单位按钮：保存为我的单位
+
+自定义单位弹窗字段：单位名称、对应克数(g)、保存
+
+气泡提示：
+
+“拇指 ≈ 10–15g 脂肪/酱；手掌(去指) ≈ 100–130g 熟肉；拳头 ≈ 150–200g 饭/菜；捧手 ≈ 30–50g 坚果。”
+
+误差说明（页脚小字）：
+
+“手掌估算为经验值，可能有 5–15% 浮动；如有秤，建议优先用克(g)记录。”
+
+八、性能与离线
+
+单位映射表放前端内置常量，首次加载即用，离线仍可换算。
+
+用户自定义单位缓存到本地并与后端同步，离线可用、联网后合并。

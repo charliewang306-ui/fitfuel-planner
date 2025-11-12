@@ -1,0 +1,309 @@
+FitMeal – 收费机制/PRO锁定 + 饮水提醒&动画 + 顶级健身App风格UI 一次性实现指令
+0) 代码基线 & 约定
+
+技术栈：保持现有（Vite/React/TypeScript/Tailwind）。
+
+统一路径（如与当前不符请等价替换）：
+
+src/pages/Dashboard.tsx（今日看板）
+
+src/pages/Water.tsx（饮水）
+
+src/pages/Records.tsx（食物/蛋白粉记录）
+
+src/pages/Timeline.tsx（时间轴提醒）
+
+src/pages/Settings.tsx（设置）
+
+src/pages/Pro.tsx（新增：付费墙/购买页）
+
+src/lib/i18n.ts（多语言）
+
+src/lib/pricing.ts（价格与功能映射）
+
+src/lib/stripe.ts（Checkout 封装）
+
+src/lib/usda.ts（USDA 食物接口）
+
+src/lib/nutrition.ts（营养计算/单位换算）
+
+src/lib/storage.ts（本地持久化，若检测到 Supabase 则可切换远端）
+
+src/components/*（UI 组件：进度条、卡片、瓶子动画、ProBadge、Paywall、Charts 等）
+
+若存在 Supabase：保留，不强依赖；默认本地存储正常工作。
+
+1) 环境变量（Secrets）
+
+请在项目 Secrets 中新增/校验（无则创建）：
+
+VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY（pk_test_xxx，测试）
+
+STRIPE_SECRET_KEY（sk_test_xxx，测试）
+
+STRIPE_PRICE_PLUS_MONTHLY、STRIPE_PRICE_PLUS_YEARLY
+
+STRIPE_PRICE_PRO_MONTHLY、STRIPE_PRICE_PRO_YEARLY
+
+USDA_API_KEY（没有就允许用字符串 DEMO_KEY，但提示速率限制）
+
+注意：只在后端路由使用 STRIPE_SECRET_KEY。前端仅使用 VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY。
+如果暂没建 Stripe 产品/价格，创建 4 个 Price（Plus 月/年、Pro 月/年），把 ID 填进上面 4 个变量。
+
+2) 收费层级与功能映射（pricing）
+
+新增 src/lib/pricing.ts：
+
+三档：
+
+Free：$0
+
+Plus：$4.99/月 或 $29.99/年
+
+Pro：$9.99/月 或 $79.99/年（默认主推）
+
+功能开关（feature flags）：
+
+Free：饮水追踪、手动食物/体重录入、维持模式；看板基本条形进度；基础时间轴（仅 3 条提醒/天）；无历史统计；AI/扫码/完整库均不可用。
+
+Plus：解锁 增肌/减脂 自动计算；可编辑时间轴+提前提醒；蛋白粉快速录入；每周统计图；多语言切换；看板“剩余营养一键补齐（每日 3 次）”。
+
+Pro：解锁 条码扫描、USDA全库搜索（不限量）、AI 营养顾问、云同步/导出 PDF、历史记录无限、主题皮肤；看板“一键补齐”不限次数。
+
+提供 getPlanFromEntitlement()（根据用户订阅态返回 plan），isFeatureEnabled(plan, featureKey)。
+
+3) Stripe Checkout & 付费墙
+
+新增 API 路由：/api/checkout（POST）
+
+入参：{ priceId, mode: 'subscription', successUrl, cancelUrl }
+
+用 STRIPE_SECRET_KEY 创建 checkout session，返回 url。
+
+新增 API 路由：/api/webhooks（POST）
+
+处理 checkout.session.completed、customer.subscription.updated、…deleted，把订阅状态写入存储（本地先落地到 localStorage.subscriptionStatus；若检测 Supabase，则写 profiles.subscription_tier）。
+
+新增 src/lib/stripe.ts：封装 startCheckout(priceKey)，从 pricing.ts 映射到 priceId，打到 /api/checkout。
+
+新增 src/pages/Pro.tsx：
+
+顶部 Slogan：“解锁 PRO · 科学增肌/减脂 不走弯路”
+
+显示“7天免费试用，之后 $9.99/月；随时取消”。
+
+对比表：Free / Plus / Pro（打勾与限额）
+
+CTA：立即解锁 PRO（默认 PRO 月付），并提供切换 Plus 与年付。
+
+在受限功能处统一使用 <Paywall gate="featureKey" />：未授权弹出 ProDialog（说明 + 升级按钮）。
+
+4) 今日看板（Dashboard）专业化改造
+
+顶部模式卡片（维持 / 减脂 / 增肌）+ 一键切换。
+
+白话指引（中/英自动）：
+
+维持：蛋白 0.8–1.0 g/磅；热量 = TDEE；脂肪 ~0.35 g/磅；碳水=剩余热量/4。
+
+减脂：蛋白 1.0–1.2 g/磅；热量 = TDEE − 300；脂肪 ~0.35 g/磅；碳水=剩余热量/4。
+
+增肌：蛋白 1.0–1.3 g/磅；热量 = TDEE + 300；脂肪 ~0.35 g/磅；碳水=剩余热量/4。
+
+饮水建议：体重(kg) × 0.6oz（或体重(磅) × 0.6oz），最低不低于 2.5L。
+
+剩余营养卡四宫格 + “一键补足剩余营养”按钮：
+
+Free：显示按钮但标注“今日已用 0/3 次，升级 PRO 解除不限”。
+
+Plus：每日 3 次。
+
+Pro：不限。
+
+条形进度条保留，数值来自 src/lib/nutrition.ts。
+
+5) 饮水页：提醒 + 容器动画优化
+
+瓶子动画：高度/渐变随已饮数值平滑过渡（CSS 动画 400ms）。
+
+预设快捷：8/12/16 oz（单位切换至 ml 时自动换算显示 250/350/500 ml）。
+
+提醒逻辑：
+
+在 Settings 设定起床/睡觉时间与“每 X 小时提醒一次”；存至 storage.reminders.water.
+
+时间轴“补水提醒”按提前X分钟生成事件（默认 10 分钟）；可编辑为 5/10/15。
+
+任何时间可手动补记，Timeline 不再产生“超长已超时红条”，改为“错过 — 去补记”灰条，不跨日累积（到第二天清零重新排程）。
+
+文案（本页底部小贴士）：
+
+“饮水提醒用于分配吸收节奏，不是硬性要求；错过可任意时间补记。”
+
+6) 时间轴（Timeline）现实化
+
+只生成当日事件（正餐/加餐/蛋白粉/补水）。
+
+事件状态：待处理 / 完成 / 错过；错过显示“去记录”按钮。
+
+“推迟”支持 +15 / +30 / +60 分钟；最多推迟到当日睡前。
+
+新建事件上限：Free(3/天)，Plus(6/天)，Pro(不限)。
+
+在卡片底部附说明：
+
+“时间是分配节奏的建议，不是硬限制；照吃照练更重要，让记录回到现实。”
+
+7) 记录页：蛋白粉模块 & USDA 接口
+
+新增类别“蛋白粉”（Protein Powder）：
+
+录入字段：品牌/口味（可选）、每勺克数、蛋白质/碳水/脂肪/热量（每勺/每100g两种显示，互算）、每次份数。
+
+快捷：1 勺 / 1.5 勺 / 2 勺 快速加。
+
+计入当日营养累计。
+
+USDA 搜索（src/lib/usda.ts）：
+
+支持关键字检索，分页；缓存 24h（localStorage + 指纹 key）。
+
+如果没有 USDA_API_KEY，用 DEMO_KEY 并提示“演示额度有限”。
+
+扫码录入（可先占位）：
+
+Pro 可用，Free/Plus 弹 Pro 对话框。
+
+若设备支持 getUserMedia 则启相机；否则提示“可搜索品牌/名称”。
+
+8) 多语言（i18n）
+
+新增 src/lib/i18n.ts，内置最少 4 种：zh, en, es, ja。
+
+自动语言：从 navigator.language 推断，允许在设置中手动切换（下拉 + 立即生效）。
+
+词条覆盖：首页看板、记录、饮水、时间轴、设置、Pro页、对话框、单位/模式文案等核心文案。
+
+未翻译的词条回退到英文。
+
+9) 设置页补强
+
+“起床/睡眠时间”“饮水提醒开关/间隔”“震动反馈开关”。
+
+“联络我们”区块：显示 support@mythicatech.com 点击可复制/唤起邮件。
+
+“语言切换”。
+
+“订阅状态”卡片：显示当前套餐与到期时间，提供“管理订阅”按钮（跳到 Stripe Customer Portal 或提示邮件联系我们）。
+
+10) 说明/教育（E&E）
+
+在 Dashboard 顶部卡片放清晰的白话解释（随模式切换）：
+
+例：
+
+增肌：
+
+蛋白：1.0–1.3 g/磅体重/天（74.8kg≈165磅 → 165–215g）
+
+热量：TDEE + 300 kcal
+
+脂肪：~0.35 g/磅（≈58g）
+
+碳水：用剩余热量除以 4 得到克数
+
+饮水：体重(kg)×0.6 oz（或 体重(磅)×0.6 oz），最低不低于 2.5 L。
+
+时间安排不是硬要求：
+
+“提醒用于帮助分配营养吸收节奏，并非硬性限制；错过可在下一顿或任意时间补记。”
+
+11) 主题与视觉升级
+
+提升对比度 & 层次：卡片圆角 rounded-2xl，阴影 shadow-soft，背景渐变轻微。
+
+进度条采用细长+圆角，数值置右侧。
+
+Dashboard 顶部使用环形卡路里进度，下方四条营养条（蛋白/脂肪/碳水/纤维）。
+
+Pro 用户可切换 3 套主题（浅绿 / 深绿 / 暗夜黑）；免费只默认主题。
+
+12) 数据与单位换算（nutrition.ts）
+
+标准化换算：
+
+oz ↔ ml；g ↔ 勺；每 100g ↔ 每份。
+
+蛋白粉：勺克数变化时自动反算营养素。
+
+目标计算：
+
+根据体重（kg/磅自动识别）、活动等级、模式计算蛋白/脂肪/碳水/热量/饮水目标。
+
+允许用户在设置页微调±10%。
+
+13) 存储（storage.ts）
+
+默认 localStorage：profile, settings, timeline, intake, subscriptionStatus, i18n.lang。
+
+若检测到 process.env.NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY，则提供开关将上述实体同步云端（可后续实现）。
+
+14) 质检（QA）与验收
+
+ 无 Stripe 时，Pro 按钮弹“稍后可用”提示且不报错。
+
+ 有 Stripe 测试 key 时，可以完成：创建 Checkout → 支付 → 返回标记订阅生效。
+
+ Pro Paywall 在条码扫描、AI 顾问、历史无限等处正确弹出。
+
+ 时间轴不再出现“已超时 8 小时+”的长红条；跨日清零。
+
+ 饮水瓶动画在 0→目标→超额时过渡流畅。
+
+ USDA 搜索可用，DEMO_KEY 时做速率提示。
+
+ 语言切换即时生效（至少 zh/en/es/ja）；首屏根据系统语言自动选择。
+
+ Dashboard 白话区随模式切换更新，并显示“蛋白/脂肪/热量/饮水”的计算逻辑。
+
+ 记录页可一键加入蛋白粉（1/1.5/2 勺）。
+
+ 看板“一键补足”在 Free/Plus/Pro 有不同配额/提示。
+
+ 设置页显示 support@mythicatech.com，可复制或 mailto。
+
+15) 文案/多语言（核心词条）
+
+请在 i18n 加入以下 key（zh / en 至少齐全；es/ja可先镜像英文）：
+
+mode.maintain, mode.cut, mode.bulk
+
+guide.proteinRange, guide.fatPerLb, guide.carbFromRest, guide.waterRule, guide.notHardRule
+
+cta.upgradePro, cta.try7days, cta.buyPlus, cta.buyPro, cta.manageSubscription
+
+feature.scan, feature.aiCoach, feature.fullDb, feature.historyUnlimited, feature.syncExport, feature.themes
+
+timeline.missed, timeline.logNow, timeline.defer, timeline.completed
+
+water.quickAdd, water.goal, water.remaining, water.tips
+
+records.proteinPowder, records.scoop, records.perScoop, records.per100g
+
+paywall.title, paywall.desc, paywall.freeVsPro
+
+16) 安全与隐私
+
+OpenAI/第三方密钥（若后续做 AI 顾问）一律仅在后端路由使用，不要写入前端代码。
+
+Stripe Webhook secret 使用环境变量，避免打印至日志。
+
+额外：快速检查 / 出错回退
+
+若 UI 不显示价格，检查 4 个 STRIPE_PRICE_* 是否存在。
+
+若 Checkout 报 401，确认为 /api/checkout 使用了服务端运行时（不是纯静态）。
+
+若 i18n 未生效，确认 I18nextProvider 在 App.tsx 顶层。
+
+若 USDA 失败，先用 DEMO_KEY 验证链路，再换正式 KEY。

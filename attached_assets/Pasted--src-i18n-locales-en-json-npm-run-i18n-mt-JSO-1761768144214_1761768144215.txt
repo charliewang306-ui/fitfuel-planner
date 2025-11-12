@@ -1,0 +1,119 @@
+一键多语言方案（只维护英文）
+要点
+
+只维护：/src/i18n/locales/en/*.json（英文为源）
+
+一键生成：npm run i18n:mt 自动把英文翻译到其它语言并写回对应 JSON
+
+运行时：缺失 key 自动回退英文；数字/日期/货币用 Intl 自动本地化
+
+设置页：出现语言下拉（含“跟随系统”），选择后即时生效+持久化
+
+给 Agent 的实施指令（一次做完）
+
+安装依赖
+
+使用 i18next + i18next-browser-languagedetector（或你项目里已有的国际化库保持一致）
+
+新增开发脚本用到的 Node 依赖（读取/写入 JSON）
+
+目录约定
+
+src/i18n/locales/en/*.json —— 唯一需要你长期维护的文件
+
+目标语言目录（先建空文件）：zh-CN/ zh-TW/ es/ fr/ de/ ja/ ko/ pt-BR/ ru/ ar/
+
+每个目录里与 en 同名 JSON（如 common.json, settings.json, billing.json, record.json…）
+
+新增运行时 i18n 配置
+
+启动顺序：用户选择 > 系统语言 > 默认 en
+
+若 locale === 'ar'，给 <html dir="rtl">
+
+缺失 key 自动回退 en
+
+设置页加“语言”下拉
+
+选项：System / 简体 / 繁體 / English / Español / Français / Deutsch / 日本語 / 한국어 / Português (Brasil) / Русский / العربية
+
+选择后：立即切换 + 写入 localStorage（可选同步到 user_profile.language）
+
+加入“一键生成多语言”的脚本（只维护英文）
+
+新建 scripts/translate-locales.ts：读取 en 的所有 JSON，生成/更新其它语言 JSON
+
+翻译引擎可以先用本地占位（直拷贝英文）跑通流程；随后接入你已有的 OpenAI API Key 做机器翻译（MT）
+
+允许“词汇表（glossary）”保证术语一致（如“蛋白质, 脂肪, 碳水, 纤维, 盎司, 千卡, 试用, 订阅…”）
+
+NPM 命令
+
+i18n:scan（可选）：扫描代码里用到的 i18n key，补到 en JSON（用 i18next-parser 或保持手工）
+
+i18n:mt：从 en 同步/机器翻译到所有目标语言
+
+i18n:check：比对各语言缺失 key，出报告（不中断构建）
+
+关键脚本（可直接让 Agent 创建）
+
+package.json 增加命令：
+
+{
+  "scripts": {
+    "i18n:mt": "ts-node scripts/translate-locales.ts",
+    "i18n:check": "ts-node scripts/check-locales.ts"
+  }
+}
+
+
+scripts/translate-locales.ts（要点伪码，Agent按此创建具体实现）：
+
+/**
+ * 读取 src/i18n/locales/en/*.json
+ * 目标语言列表：['zh-CN','zh-TW','es','fr','de','ja','ko','pt-BR','ru','ar']
+ * 逐文件逐key比对，同步新增&更新，使用 MT 引擎（优先 OpenAI）生成译文
+ * 保留已有人工修改，不覆盖手动改动（仅填缺失或跟随英文变更的新增key）
+ * 支持 glossary 替换，保证术语稳定
+ */
+
+const SOURCE = 'src/i18n/locales/en';
+const TARGETS = ['zh-CN','zh-TW','es','fr','de','ja','ko','pt-BR','ru','ar'];
+
+// 伪函数：读取/写入JSON、深度合并、遍历keys、调用MT（OpenAI）等
+// translate(text, targetLang, glossary) => string
+// deepMerge(existing, additions) => object
+
+// 流程：
+// 1. 读取 en/*.json 为 baseline
+// 2. 对每个 targetLang：
+//    - 读取 target 同名 JSON（不存在则空对象）
+//    - 对每个 key：若 target 缺失 => 调用 translate(baselineValue)
+//    - 写回 target JSON（保持 key 顺序）
+// 3. 输出统计：每种语言新增/更新了多少 key
+
+
+（可选）scripts/check-locales.ts：
+
+/**
+ * 比对每个语言与 en 的差异，打印缺失 key 清单，CI可用
+ */
+
+
+OpenAI 机器翻译（可选强化）
+
+在脚本里注入 OPENAI_API_KEY
+
+使用 gpt-4o-mini 做术语受控翻译：提示里附加 glossary（如 Macro = 宏量营养素…）
+
+首次全量跑一遍（几十~几百条 key 很快），之后增量几乎没有成本
+
+你将如何使用
+
+日常只改英文：改 src/i18n/locales/en/*.json
+
+一键生成：运行 npm run i18n:mt → 自动更新所有语言文件
+
+上线前检查：npm run i18n:check → 确认无缺失
+
+用户体验：设置页出现语言选择；默认跟随系统；切换即时生效

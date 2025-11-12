@@ -1,0 +1,37 @@
+{
+  "title": "Protein Powder",
+  "quickAdd": {
+    "title": "Quick Add Protein",
+    "fromTemplate": "Add from Template",
+    "scanBarcode": "Scan Barcode",
+    "createCustom": "Create My Protein"
+  },
+  "templates": {
+    "whey": "Whey Protein",
+    "wheyClassic": "Whey Classic",
+    "wheyLean": "Whey Lean",
+    "wheyCarb": "Whey High-Carb",
+    "plant": "Plant Protein (Pea/Soy)",
+    "blend": "Protein Blend"
+  },
+  "form": {
+    "selectTemplate": "Select Template",
+    "name": "Name",
+    "servingSize": "Serving Size",
+    "servingUnit": "Unit",
+    "gramsPerServing": "Grams per serving",
+    "nutritionPer100g": "Nutrition per 100g",
+    "tags": "Tags (comma separated)",
+    "bindBarcode": "Bind to barcode",
+    "preview": "This serving will add"
+  },
+  "suggestions": {
+    "postWorkout": "Suggest adding {protein}g protein (≈ {powder}g protein powder) to complete today's recovery goal",
+    "trainingWindow": "Post-workout window"
+  },
+  "scanning": {
+    "found": "Protein powder found!",
+    "notFound": "Barcode not found. Create custom protein?",
+    "confirmAdd": "Confirm Add"
+  }
+}

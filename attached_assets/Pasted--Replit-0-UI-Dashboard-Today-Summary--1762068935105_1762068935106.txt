@@ -1,0 +1,148 @@
+给 Replit 的执行指令 ——「今日打卡 + 月历点亮 + 连续天数」
+0) 放置位置（UI）
+
+Dashboard（首页）：在 Today Summary 卡片右上角加入 “完成今日” 按钮（已完成后显示 ✅ 图标和“已完成”状态）。
+
+Timeline（时间轴页）：顶部加入 月历打卡视图（Duolingo 风格的“亮/不亮”），显示本月每日完成状态与连续天数。
+
+Settings（设置页）：新增一个开关：“自动完成（当日目标均达标时自动打卡）”，默认关闭。
+
+1) 数据结构（Supabase / DB）
+
+建表 daily_status：
+
+create table if not exists daily_status (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  day date not null,                 -- 用“用户设备时区的本地日”对应的日期（入库存UTC日即可）
+  completed boolean not null default false,
+  completed_at timestamptz,
+  auto_completed boolean not null default false,  -- 是否由系统自动打卡
+  notes text,                        -- 预留：手动备注
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, day)
+);
+
+
+RLS（如果已启用）：仅允许本人读写 user_id = auth.uid() 的记录。
+
+2) 前端组件与交互
+2.1 Dashboard 顶部按钮
+
+按钮文案（未完成）：“完成今日”
+
+已完成显示：✅ 已完成（按钮禁用或改为“撤销打卡”二选一，推荐可撤销）
+
+点击行为：
+
+调用 toggleComplete(today)：
+
+若 daily_status.completed=false → 置 true，写入 completed_at=now()。
+
+若 true 且用户点“撤销”→ 置回 false（completed_at=null）。
+
+文案（小字提示放在按钮下方一行）：
+
+亮起代表你完成了今天的计划；没亮不代表失败，只是还没完成。
+
+2.2 Timeline 月历视图（本月）
+
+样式：每一天一个小圆/小方格
+
+完成：主色实心圆点/实心方块
+
+未完成：淡灰空心（绝不显示❌/红叉/失败）
+
+日历上方显示：“连续天数：X 天”（streak）
+
+点击某天：弹出卡片，显示当天完成状态与（可选）备注区
+
+3) 逻辑函数（TS/React 伪代码，可直接实现）
+// utils/streak.ts
+export function calcStreak(days: { day: string; completed: boolean }[]): number {
+  // days：按 day 降序（今天→过去）
+  let streak = 0;
+  for (const d of days) {
+    if (d.completed) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// api/dailyStatus.ts
+export async function getMonthStatus(userId: string, year: number, month: number) {
+  // 查询本月1号~月末所有 daily_status
+}
+export async function toggleComplete(userId: string, localDate: string) {
+  // localDate: 'YYYY-MM-DD'（设备时区那一天）
+  // upsert { user_id, day: localDate, completed: !current }
+}
+
+
+时区说明：你前面已修好“设备本地时区”问题。这里直接用 设备本地日 作为 day 字段（生成时再统一转UTC日入库即可），展示时按设备时区还原为本地日期。
+
+4) 自动完成（可选）
+
+当用户开启“自动完成”并且满足你定义的达标条件（如：今日蛋白≥目标×90%、卡路里在目标±10%、喝水≥目标×80% 等），在当日晚上 21:00 本地时间检测一次：
+
+满足 → auto_completed=true 且 completed=true
+
+不满足 → 不做任何事
+
+Dashboard 上若是自动完成，状态文案显示：“✅ 已完成（自动）”，旁边提供“撤销”按钮。
+
+这一步先留钩子，触发逻辑你可以后续加（CRON/edge task/客户端定时检查皆可）。
+
+5) UI 文案（直接使用）
+
+Dashboard 按钮：
+
+未完成：完成今日
+
+已完成：✅ 已完成（或“撤销打卡”）
+
+小提示：
+“亮起代表你完成了当天计划；没亮不代表失败，只是还没完成。”
+
+Timeline 标题行：
+“本月打卡”　“连续天数：{X} 天”
+
+日历图例（可选，底部一行）：
+● 完成　○ 未完成
+
+6) 视觉风格（Tailwind/shadcn）
+
+完成：bg-primary text-primary-foreground
+
+未完成：border border-muted-foreground/30 text-muted-foreground
+
+Hover：轻微 ring-1 ring-primary/20
+
+按钮：<Button size="sm" className="rounded-full">完成今日</Button>
+
+已完成按钮：variant="secondary" + ✅ 图标（lucide CheckCircle2）
+
+7) 边界与规则
+
+今日只需记录一次完成状态（支持撤销）。
+
+允许离线：本地先标记，网络通后同步。
+
+不做失败评判、不显示红叉。
+
+月初跨月：日历自动切换到当前月（左右切换查看相邻月份）。
+
+Streak 规则：从今天向前连续的“完成日”数量，遇到第一天未完成即停止累加。
+
+8) 开发清单（一步步做）
+
+新建表 daily_status + RLS。
+
+Dashboard 增“完成今日”按钮 → 接 toggleComplete()。
+
+Timeline 顶部加“本月打卡”日历 → 用 getMonthStatus() 渲染 → calcStreak()。
+
+Settings 增“自动完成”开关（布尔）并持久化到用户设置表。
+
+视觉与文案按上方要求应用；绝不使用红叉/失败字样。

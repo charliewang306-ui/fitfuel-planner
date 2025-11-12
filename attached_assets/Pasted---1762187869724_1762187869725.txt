@@ -1,0 +1,73 @@
+目标：实现“智能加餐推荐”模块，支持水果/乳制品/全食物，而不是只有零食；提供“换一组”按钮；所有推荐围绕“补缺&纠偏”（蛋白↑、控碳、低脂、补纤维、补钙）策略生成；并能根据用户今天的摄入差距智能调整份量与推荐类型。
+
+一、数据与标签
+1) 建立 snack_catalog（可放前端常量 + 后端可扩展），每项含：
+   id, name, base_portion_g/ml, per100g_macros {kcal,p,f,c,fiber,calcium}, tags[]
+   常用标签：high_protein, low_carb, low_fat, fruit, dairy, whole_food, portable, quick, budget, no_cook, lactose_free, gluten_free
+   示例（少量）：
+   - “希腊酸奶(无糖，2%脂)” tags:[dairy, high_protein, low_carb]
+   - “脱脂牛奶” tags:[dairy, low_fat]
+   - “鸡胸肉条(熟)” tags:[high_protein, whole_food]
+   - “水煮蛋” tags:[high_protein, portable]
+   - “香蕉” tags:[fruit, whole_food]
+   - “苹果” tags:[fruit, whole_food]
+   - “蓝莓” tags:[fruit, whole_food, low_cal]
+   - “胡萝卜条” tags:[whole_food, low_cal]
+   - “全麦吐司(小片)” tags:[carb, whole_food]
+   - “坚果混合(少量)” tags:[fat, portable]
+   - “低脂奶酪条” tags:[dairy, high_protein]
+   - “无糖豆浆” tags:[dairy_alt, high_protein]
+   - ……后续可继续补齐 50+ 常见项（中/西式）
+
+2) 用户偏好与约束：
+   - 用户设置里保存：是否乳糖不耐(lactose_intolerant)、是否素食、过敏项(花生/坚果/乳品/麸质等)、预算/是否需要便携。
+   - 记录当日已摄入的：kcal/p/f/c/fiber/calcium，和日目标（基于cut/maintain/bulk）。
+   - 乳制品每日建议份数上限，默认 1–2 份（可配置 DAILY_DAIRY_CAP=2）。
+
+二、推荐引擎（打分 + 组装）
+1) 计算“差距向量”：gap = target_today - consumed_so_far（分别对 p/f/c/kcal/fiber/calcium）。
+2) 为每个候选 snack 计算“匹配分数”：
+   score = wP*matchP + wC*matchC + wF*matchF + wK*matchK + wFiber*matchFiber + wCa*matchCa + bonus_tags
+   - matchX 根据 gapX 的方向与 snack 的 per-portion 贡献来评估，越能弥补差距分越高；若会让已过量的宏进一步超出，降低分。
+   - bonus_tags：若用户勾选“便携/预算/无需加热”，匹配相应 tags 加分；若乳糖不耐，dairy 减分或过滤。
+   - 乳制品已达 DAILY_DAIRY_CAP，则 dairy 项过滤或大幅降分。
+3) 动态份量建议：
+   - 基于 gap 与 snack 的 per100g_macros，算出“推荐份量”portion = clamp_to_range( base_portion * scale )
+   - 例如蛋白差距较大，则 scale↑，但受“单次合理份量上限”限制。
+4) 输出一组候选（例如每次 5 项），并提供“换一组”：
+   - “换一组”重新采样候选集合：同一标签桶内做随机，但避免重复上屏项目；使用 seed + seen_set 实现去重。
+   - 支持“单项换同类”：在某一项卡片上有“换同类”按钮，根据同标签和相似宏结构替换。
+
+三、UI/交互
+1) 顶部显示“今日差距概览”chips：需补蛋白/控碳/低脂/补纤维/补钙（根据 gap 自动点亮），并提供筛选开关。
+2) 中部为推荐卡片列表（5项）：卡片内容含
+   - 名称 + 标签chips（fruit/dairy/high_protein…）
+   - 推荐份量（可编辑 g/ml 或份数），实时显示 kcal/P/F/C/fiber/钙
+   - 操作：①加入今日（记账）②换同类 ③不再推荐（拉黑）
+3) 右上角提供“换一组”按钮；点击后在保留“差距逻辑”的前提下，换新5项。
+4) 入口可切换“类别视图”：水果 / 高蛋白 / 低脂 / 低碳 / 乳制品 / 植物基 / 便携零准备；类别视图下仍按差距排序。
+5) 乳糖不耐或已达乳制品上限时，卡片右上角展示提示；可点击“改为无乳同类”一键替换（如牛奶→无糖豆浆/无糖酸奶）。
+
+四、记录与约束
+1) “加入今日”写入 intake 日志，叠加到当日摄入；若饮品（牛奶/豆浆），同时触发 hydration 折算（例如 0.8 系数）。
+2) 同一种食物一天出现多次允许；系统仅按总量统计宏量与热量。
+3) 若当日 kcal/fat 已超，卡片显示温和警示（不强制禁止），优先推荐“蛋白高/热量低”的替代选项。
+
+五、参数与阈值（可配置常量）
+- DAILY_DAIRY_CAP = 2  // 乳制品推荐上限（份/天）
+- DAIRY_HYDRATION_RATIO = 0.8
+- FRUIT_PORTION_DEFAULT = 150 // g
+- PROTEIN_LOW_THRESHOLD = 20  // g 差距判定阈值
+- SUGAR_HIGH_THRESHOLD = 15   // g 单加餐糖判定（提示）
+- PORTION_MIN/MAX 按品类定义，比如坚果单次 10–25g
+
+六、可用的示例候选（初始最小集）
+- 高蛋白：希腊酸奶(无糖)、鸡胸肉条、水煮蛋、低脂奶酪条、无糖豆浆、金枪鱼罐头(水浸)
+- 水果：苹果、香蕉、蓝莓、草莓、奇异果、葡萄（标注份量与糖分提示）
+- 低脂低碳：黄瓜条、胡萝卜条、樱桃番茄、毛豆（盐水控量）
+- 全食物主食小份：全麦吐司(小片)、燕麦即食杯(低糖款)
+- 健康脂肪（限量）：混合坚果10–20g、牛油果小份
+- 乳制品：脱脂/低脂牛奶、低脂酸奶（无糖）、低脂奶酪条（控制份数）
+
+七、埋点（便于后续优化）
+- 记录用户点击“换一组/换同类/不再推荐/加入今日”的操作与对应标签，统计命中率，优化权重。

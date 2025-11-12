@@ -1,0 +1,171 @@
+【FitMeal】时间轴“错过可补”+说明文案 + 统计逻辑（一次做完）
+0) 目标
+
+把餐/饮水提醒从“硬计时”改为“弹性引导”：错过后可补记 / 推迟 / 跳过。
+
+今日统计以实际记录的总摄入为准（卡路里、蛋白、脂肪、碳水、饮水），不因错过而清零。
+
+在首页和时间轴页新增说明文案，教育性表达“时间是节奏，不是枷锁”。
+
+1) 数据与状态
+1.1 日程项数据结构（若已有则补充字段）
+type ScheduleItem = {
+  id: string;
+  userId: string;
+  type: 'meal' | 'snack' | 'water'; // 正餐/加餐/喝水
+  plannedAt: string;   // 计划时间 ISO
+  status: 'pending' | 'done' | 'missed' | 'skipped' | 'postponed';
+  templateId?: string; // 可选，绑定默认模板（如“午餐模版/蛋白粉一勺”）
+  createdAt: string;
+  updatedAt: string;
+};
+
+1.2 记录项数据结构（已存在则不变）
+type IntakeRecord = {
+  id: string;
+  userId: string;
+  kind: 'food' | 'water';
+  source: 'manual' | 'barcode' | 'ai_suggest' | 'template';
+  name: string;        // 食物名/蛋白粉名称
+  amount: number;      // 克/毫升/份
+  units: 'g' | 'ml' | 'oz' | 'serving';
+  macros: { kcal: number; protein: number; fat: number; carb: number };
+  recordedAt: string;  // 实际记录时间
+  scheduleId?: string; // 若由某个日程补记/完成，保存关联
+  createdAt: string;
+};
+
+2) 后端改动
+2.1 定时任务“超时标记为 missed”
+
+后端或前端启动时轮询，将 plannedAt < now && status === 'pending' 的项标记为 missed。
+
+保持幂等（重复调用不影响）。
+
+2.2 三个操作接口
+POST /api/schedule/:id/complete
+// body: { recordPayload }  // 创建 IntakeRecord，关联 scheduleId，并把 status -> 'done'
+
+POST /api/schedule/:id/postpone
+// body: { minutes: number } // 将 plannedAt 往后推 N 分钟，status -> 'postponed'
+
+POST /api/schedule/:id/skip
+// 无 body // status -> 'skipped'
+
+2.3 今日汇总统计接口（已有则确保逻辑）
+
+统计维度为当天 recordedAt 落在本地日历天（用户时区）的 IntakeRecord 汇总。
+
+不依赖 ScheduleItem 状态，只看真实记录。
+
+3) 前端 UI/UX
+3.1 时间轴卡片状态样式
+
+pending：灰底/正常
+
+postponed：淡蓝提示“已推迟”
+
+missed：淡红背景 + “已错过”
+
+done：绿色勾
+
+skipped：灰细线穿过标题
+
+3.2 “错过卡片”的操作条（横向三个按钮）
+
+补记此项（主按钮/绿色）：打开记录面板
+
+若 type === 'meal' | 'snack'：打开食物记录，优先填充templateId或最近一次此餐模板
+
+若 type === 'water'：打开喝水快速 +8/+12/+16oz 面板
+
+保存后：创建 IntakeRecord，并将该 ScheduleItem.status = 'done'
+
+推迟30分钟（次按钮/蓝色）：直接调用 postpone 接口 { minutes: 30 }
+
+跳过（幽灵按钮/灰色）：将状态置为 skipped
+
+3.3 顶部说明文案（首页 & 时间轴页都要显示，移动端可折叠）
+
+放在「今日营养目标」卡片下方或时间轴顶部的轻量信息条：
+
+关于用餐时间
+用餐/饮水时间用于帮助分配营养吸收节奏，并非硬性要求。若错过某个时间点，仍可在下一顿或任意时间补记该餐或蛋白粉，系统会以当天累计摄入为准进行统计。
+
+（i18n 键名建议）
+
+{
+  "notice.timing.title": "关于用餐时间",
+  "notice.timing.body": "用餐/饮水时间用于帮助分配营养吸收节奏，并非硬性要求。若错过某个时间点，仍可在下一顿或任意时间补记该餐或蛋白粉，系统会以当天累计摄入为准进行统计。"
+}
+
+3.4 按钮文案（i18n）
+{
+  "timeline.missed": "已错过",
+  "timeline.postponed": "已推迟",
+  "timeline.actions.complete": "补记此项",
+  "timeline.actions.postpone": "推迟30分钟",
+  "timeline.actions.skip": "跳过",
+  "timeline.completed": "已完成",
+  "timeline.skipped": "已跳过"
+}
+
+4) 逻辑要点与边界
+
+跨天：午夜后自动只显示“今天”的日程；昨天未完成项不自动延续，但可在历史中查看。
+
+记录多次：允许同一 ScheduleItem 被多次记录（加餐/追加水），但首次“补记”时将其 status=done。追加记录不改状态。
+
+统计：始终以 IntakeRecord 为准汇总今日摄入。
+
+本地时区：所有“今天”判定使用用户设置的时区（若无则浏览器时区）。
+
+无通知环境：即使没有系统通知，时间轴也能独立运作（颜色/状态变化 + 操作按钮）。
+
+5) 代码落点（建议）
+
+前端：
+
+app/(tabs)/timeline/page.tsx 或对应路由：渲染卡片、按钮的点击事件。
+
+components/schedule/ScheduleCard.tsx：抽象卡片组件，注入状态样式和操作面板。
+
+lib/api/schedule.ts：封装 complete/postpone/skip 请求。
+
+i18n/zh.json：加入文案键值。
+
+首页 Dashboard：在营养目标卡片下方插入说明条组件 <TimingHint />。
+
+后端/Edge API：
+
+pages/api/schedule/[id]/complete.ts
+
+pages/api/schedule/[id]/postpone.ts
+
+pages/api/schedule/[id]/skip.ts
+
+pages/api/stats/today.ts：确保“当天累计摄入”的逻辑。
+
+6) 验收标准（QA）
+
+时间到期后，卡片自动变“已错过”，出现三按钮（补记/推迟/跳过）。
+
+点“补记此项”能创建记录并把卡片置为“已完成”；统计面板随即更新。
+
+点“推迟”后，卡片回到“待处理”，计时和时间显示更新。
+
+点“跳过”，卡片置灰，统计不增加。
+
+首页与时间轴顶部均显示“时间是节奏不是枷锁”的说明；移动端不占太多高度，可折叠。
+
+今日统计仅基于 IntakeRecord.recordedAt 落在今天的记录，无论是否错过过提醒。
+
+7)（可选）友好提示语
+
+错过餐点时显示：
+
+「没关系，补记一下就好，关键是今天总量到位 ✅」
+
+连续错过 ≥2 项时：
+
+「今天节奏有点乱，建议用‘一键补足营养’快速安排一小餐或蛋白粉」

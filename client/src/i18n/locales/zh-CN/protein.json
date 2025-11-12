@@ -1,0 +1,37 @@
+{
+  "title": "蛋白粉",
+  "quickAdd": {
+    "title": "快速添加蛋白粉",
+    "fromTemplate": "从模板添加",
+    "scanBarcode": "扫描条码",
+    "createCustom": "创建自定义"
+  },
+  "templates": {
+    "whey": "乳清蛋白",
+    "wheyClassic": "经典乳清蛋白",
+    "wheyLean": "低脂乳清蛋白",
+    "wheyCarb": "增肌乳清蛋白",
+    "plant": "植物蛋白（豌豆/大豆）",
+    "blend": "混合蛋白"
+  },
+  "form": {
+    "selectTemplate": "选择模板",
+    "name": "名称",
+    "servingSize": "每份用量",
+    "servingUnit": "单位",
+    "gramsPerServing": "每份克数",
+    "nutritionPer100g": "每100克营养",
+    "tags": "标签（逗号分隔）",
+    "bindBarcode": "绑定条码",
+    "preview": "此份量将添加"
+  },
+  "suggestions": {
+    "postWorkout": "建议补充 {protein}g 蛋白质（≈ {powder}g 蛋白粉）以完成今日恢复目标",
+    "trainingWindow": "训练后窗口期"
+  },
+  "scanning": {
+    "found": "找到蛋白粉！",
+    "notFound": "未找到条码。创建自定义蛋白粉？",
+    "confirmAdd": "确认添加"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "title": "Cronología",
+  "today": "Hoy",
+  "reminders": "Recordatorios",
+  "noReminders": "No hay recordatorios para hoy",
+  "addReminder": "Añadir Recordatorio",
+  "editReminder": "Editar Recordatorio",
+  "deleteReminder": "Eliminar Recordatorio",
+  "time": "Hora",
+  "status": {
+    "pending": "Pendiente",
+    "completed": "Completado",
+    "overdue": "Atrasado",
+    "missed": "Perdido",
+    "postponed": "Pospuesto",
+    "skipped": "Omitido"
+  },
+  "countdown": {
+    "remaining": "Restante",
+    "overdue": "Atrasado",
+    "hours": "{count}h",
+    "minutes": "{count}m"
+  },
+  "postpone": {
+    "title": "Posponer",
+    "min15": "+15 min",
+    "min30": "+30 min",
+    "min60": "+60 min"
+  },
+  "markCompleted": "Marcar Completado",
+  "scheduledTime": "Hora Programada",
+  "description": "Descripción",
+  "infoBanner": {
+    "title": "El tiempo es ritmo, no restricción",
+    "description": "¿Perdiste un recordatorio? ¡No te preocupes! Puedes ponerte al día en cualquier momento. Nos enfocamos en tu nutrición diaria total, no en horarios estrictos. Tus hábitos saludables deben ser flexibles y sostenibles: los recordatorios son una guía suave, no requisitos rígidos."
+  },
+  "catchup": {
+    "button": "Ponerse al día",
+    "successTitle": "Registro completado",
+    "successDescription": "Este recordatorio se registró exitosamente"
+  },
+  "actions": {
+    "complete": "Completar",
+    "postpone": "Posponer",
+    "skip": "Omitir",
+    "delete": "Eliminar"
+  }
+}

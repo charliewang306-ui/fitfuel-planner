@@ -1,0 +1,48 @@
+{
+  "title": "Linha do Tempo",
+  "today": "Hoje",
+  "reminders": "Lembretes",
+  "noReminders": "Sem lembretes para hoje",
+  "addReminder": "Adicionar Lembrete",
+  "editReminder": "Editar Lembrete",
+  "deleteReminder": "Excluir Lembrete",
+  "time": "Hora",
+  "status": {
+    "pending": "Pendente",
+    "completed": "Concluído",
+    "overdue": "Atrasado",
+    "missed": "Perdido",
+    "postponed": "Adiado",
+    "skipped": "Ignorado"
+  },
+  "countdown": {
+    "remaining": "Restante",
+    "overdue": "Atrasado",
+    "hours": "{count}h",
+    "minutes": "{count}m"
+  },
+  "postpone": {
+    "title": "Adiar",
+    "min15": "+15 min",
+    "min30": "+30 min",
+    "min60": "+60 min"
+  },
+  "markCompleted": "Marcar como Concluído",
+  "scheduledTime": "Hora Agendada",
+  "description": "Descrição",
+  "infoBanner": {
+    "title": "O tempo é ritmo, não restrição",
+    "description": "Perdeu um lembrete? Sem problemas! Você pode registrar a qualquer momento. Focamos na sua nutrição diária total, não em horários rígidos. Seus hábitos saudáveis devem ser flexíveis e sustentáveis — lembretes são orientações gentis, não requisitos rígidos."
+  },
+  "catchup": {
+    "button": "Registrar depois",
+    "successTitle": "Registro realizado",
+    "successDescription": "Este lembrete foi registrado com sucesso"
+  },
+  "actions": {
+    "complete": "Concluir",
+    "postpone": "Adiar",
+    "skip": "Ignorar",
+    "delete": "Excluir"
+  }
+}

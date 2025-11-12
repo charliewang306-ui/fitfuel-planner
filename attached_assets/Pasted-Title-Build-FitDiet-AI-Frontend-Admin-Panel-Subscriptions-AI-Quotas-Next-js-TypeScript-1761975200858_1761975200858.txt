@@ -1,0 +1,496 @@
+Title: Build “FitDiet AI” — Frontend + Admin Panel + Subscriptions + AI Quotas (Next.js + TypeScript + Supabase + Stripe)
+
+Goal:
+
+前台（用户可见）：记录饮食/饮水、AI菜单、AI教练、趋势图。
+
+后台（仅管理员可见）：用户/订阅/AI额度/功能开关/内容热更新/审计日志。
+
+角色与数据安全：基于 Supabase Auth + RLS；后台路由受保护并伪装 404。
+
+计费：Stripe（Free/Plus/Pro），Webhook 同步状态与配额。
+
+AI 限流：按计划每日次数限制（AI菜单、AI教练分别统计）。
+
+单位系统：默认 lb/oz，用户可切换 kg/g。
+
+多语言：所有层级开放语言切换（不是付费点）。
+
+历史数据：所有层级无限保存（付费点放在“分析/AI/自动化”，而非锁历史）。
+
+1) 技术栈与目录
+
+Next.js 14 (App Router) + TypeScript + TailwindCSS
+
+Supabase（Auth/DB/Storage/RLS）
+
+Stripe（订阅与 Webhook）
+
+OpenAI API（或等价 LLM 提供商）
+
+shadcn/ui 做基本后台 UI
+
+SWR/React Query 数据获取
+
+Sentry（可选）错误上报
+
+/src
+  /app
+    /(public)
+      /login
+      /dashboard
+      /records
+      /ai-menu
+      /ai-coach
+      /settings
+    /(admin)               // 管理后台专用段
+      /admin
+        page.tsx           // 仪表盘
+        /users
+          page.tsx
+        /subscriptions
+          page.tsx
+        /ai-usage
+          page.tsx
+        /features
+          page.tsx
+        /content
+          page.tsx
+        /logs
+          page.tsx
+    /api
+      /auth
+        route.ts
+      /stripe
+        /webhook
+          route.ts
+      /admin
+        /users
+          /search
+            route.ts
+          /grant-pro
+            route.ts
+          /ban
+            route.ts
+        /ai
+          /menu
+            route.ts       // 统一服务端校验额度后转发到 LLM
+          /coach
+            route.ts
+          /quota
+            /reset
+              route.ts
+      /features
+        route.ts
+      /records
+        /create
+          route.ts
+        /summary
+          route.ts
+  /lib
+    supabase.ts
+    auth.ts
+    rls.ts
+    stripe.ts
+    ai.ts
+    quota.ts
+    featureFlags.ts
+    audit.ts
+  /middleware.ts
+
+2) 环境变量（.env）
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=        # 仅服务器端使用
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PRICE_PLUS_ID=
+NEXT_PUBLIC_STRIPE_PRICE_PRO_ID=
+OPENAI_API_KEY=
+APP_BASE_URL=https://your-domain.com
+ADMIN_ALLOWED_EMAILS=you@domain.com,staff@domain.com  # 初始白名单
+
+3) 数据库建表与 RLS（Supabase SQL）
+
+在 Supabase SQL 控制台执行以下脚本（一次性）。
+注意：启用 Row Level Security（RLS）。
+
+-- 1) 用户资料
+create table if not exists profiles (
+  id uuid primary key default auth.uid(),
+  email text unique,
+  display_name text,
+  role text check (role in ('user','staff','admin')) default 'user',
+  unit_system text check (unit_system in ('imperial','metric')) default 'imperial',
+  locale text default 'en',
+  created_at timestamptz default now()
+);
+alter table profiles enable row level security;
+
+create policy "profiles_self_select"
+on profiles for select
+using (auth.uid() = id or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('staff','admin')));
+
+create policy "profiles_self_update"
+on profiles for update
+using (auth.uid() = id);
+
+-- 2) 订阅状态
+create table if not exists subscriptions (
+  user_id uuid references profiles(id) on delete cascade,
+  plan text check (plan in ('free','plus','pro')) default 'free',
+  status text check (status in ('active','trialing','canceled','past_due','none')) default 'none',
+  current_period_end timestamptz,
+  updated_at timestamptz default now(),
+  primary key (user_id)
+);
+alter table subscriptions enable row level security;
+
+create policy "subs_self_select"
+on subscriptions for select
+using (auth.uid() = user_id or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('staff','admin')));
+
+create policy "subs_user_no_update"
+on subscriptions for update
+using (false); -- 仅后端/Service Key 更新
+
+-- 3) AI 使用额度（每日）
+create table if not exists ai_usage_daily (
+  user_id uuid references profiles(id) on delete cascade,
+  date date not null,
+  menu_used int default 0,
+  coach_used int default 0,
+  primary key (user_id, date)
+);
+alter table ai_usage_daily enable row level security;
+
+create policy "ai_self_select"
+on ai_usage_daily for select
+using (auth.uid() = user_id or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('staff','admin')));
+
+create policy "ai_self_update"
+on ai_usage_daily for update
+using (auth.uid() = user_id);
+
+-- 4) Feature Flags
+create table if not exists feature_flags (
+  key text primary key,
+  plan_visibility text[] not null default '{free,plus,pro}',
+  enabled boolean default true,
+  updated_at timestamptz default now()
+);
+alter table feature_flags enable row level security;
+
+create policy "flags_all_select"
+on feature_flags for select
+using (true);
+
+create policy "flags_admin_update"
+on feature_flags for update
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('staff','admin')));
+
+-- 初始化一些功能开关
+insert into feature_flags (key, plan_visibility) values
+('ai_menu', '{free,plus,pro}'),
+('ai_coach', '{free,plus,pro}'),
+('barcode_scan', '{pro}'),
+('ocr_label', '{pro}'),
+('usda_db', '{pro}')
+on conflict (key) do nothing;
+
+-- 5) 记录（饮食/饮水）简化表
+create table if not exists records (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade,
+  ts timestamptz default now(),
+  type text check (type in ('food','water')),
+  name text,
+  kcal int,
+  protein_g numeric,
+  fat_g numeric,
+  carb_g numeric,
+  fiber_g numeric
+);
+alter table records enable row level security;
+
+create policy "records_self_crud"
+on records for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- 6) 审计日志
+create table if not exists audit_log (
+  id bigint generated always as identity primary key,
+  actor uuid,            -- 操作人（admin/staff）
+  action text,           -- e.g. 'grant_pro', 'ban_user', 'reset_quota'
+  target uuid,           -- 目标用户
+  meta jsonb,
+  created_at timestamptz default now()
+);
+alter table audit_log enable row level security;
+
+create policy "audit_admin_select"
+on audit_log for select
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('staff','admin')));
+
+-- 7) 仅管理员可见视图（如需要）
+-- 可选：创建安全函数由服务端调用，无需额外 RLS。
+
+
+注意：后台聚合查询统一采用服务端 SUPABASE_SERVICE_ROLE_KEY，不直接暴露到前端。
+
+4) 角色初始化与白名单
+
+注册后用 Edge Function/Server Action 同步 profiles.email，默认 role='user'。
+
+后台第一次运行时：读取 ADMIN_ALLOWED_EMAILS，将匹配邮箱的用户 role 提升为 admin。
+
+后台页面仅允许 role in ('staff','admin') 访问。
+
+5) 路由保护（/src/middleware.ts）
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getSession } from './lib/auth'; // 你实现：服务器侧读取会话/JWT
+
+export async function middleware(req: NextRequest) {
+  const url = new URL(req.url);
+  const isAdmin = url.pathname.startsWith('/admin');
+  if (!isAdmin) return NextResponse.next();
+
+  const session = await getSession(req);
+  if (!session) return NextResponse.redirect(new URL('/login', req.url));
+
+  const role = session.user?.role;
+  if (role !== 'admin' && role !== 'staff') {
+    return new NextResponse('Not Found', { status: 404 }); // 伪装404
+  }
+  return NextResponse.next();
+}
+
+6) Stripe Webhook（/src/app/api/stripe/webhook/route.ts）
+
+需求：同步订阅计划与周期；创建/更新/取消 → 写入 subscriptions 表。
+
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { supabaseAdmin } from '@/lib/supabase';
+import { buffer } from 'stream/consumers';
+
+export const config = { api: { bodyParser: false } } as any;
+
+export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
+  const sig = req.headers.get('stripe-signature')!;
+  const rawBody = await req.arrayBuffer();
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(Buffer.from(rawBody), sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (err:any) {
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  }
+
+  // 根据 event.type 解析订阅信息
+  if (event.type.startsWith('customer.subscription.')) {
+    const sub = event.data.object as Stripe.Subscription;
+    const userId = sub.metadata?.user_id; // 你在创建 checkout session 时写入 metadata
+    const priceId = sub.items.data[0]?.price?.id;
+    const plan = priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ID ? 'pro'
+               : priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_PLUS_ID ? 'plus'
+               : 'free';
+
+    await supabaseAdmin
+      .from('subscriptions')
+      .upsert({
+        user_id: userId,
+        plan,
+        status: sub.status as any,
+        current_period_end: new Date(sub.current_period_end * 1000).toISOString()
+      });
+  }
+
+  return NextResponse.json({ received: true });
+}
+
+
+结算页/客户门户创建时记得在 metadata 带上 user_id。
+
+7) AI 调用统一网关 + 限流（/src/app/api/ai/menu/route.ts、/ai/coach/route.ts）
+
+所有 AI 请求只走服务端 Route，客户端永不直连 LLM。
+
+每次请求前检查 subscriptions.plan 与 ai_usage_daily。
+
+免费层：AI 菜单每 3 天 1 次；AI 教练仅基础提示（或 0 次对话）。
+
+Plus：每日 3 次；Pro：无限（用大值如 9999 表示）。
+
+成功后计数 +1，失败不计数。
+
+示例：/ai/menu/route.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase';
+import { ensureQuota, incQuota } from '@/lib/quota';
+import { buildMenuPrompt, callLLM } from '@/lib/ai';
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(req);
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  const userId = session.user.id;
+  const today = new Date().toISOString().slice(0,10);
+
+  // 1) 查询订阅与今日用量
+  const { data: sub } = await supabaseAdmin.from('subscriptions').select('*').eq('user_id', userId).single();
+  const plan = sub?.plan || 'free';
+
+  // 2) 校验额度（按计划）
+  const ok = await ensureQuota(userId, today, plan, 'menu'); // 内部读取 ai_usage_daily 与计划限制
+  if (!ok) return NextResponse.json({ error: 'quota_exceeded' }, { status: 429 });
+
+  // 3) 读取用户目标/偏好/剩余宏，构建 Prompt
+  const payload = await req.json();
+  const prompt = await buildMenuPrompt(userId, payload); // 组装：目标/剩余宏/偏好/过敏/单位/可替换项/±5%
+
+  // 4) 调用 LLM
+  const result = await callLLM(prompt); // 返回结构化 JSON（含三餐/替换/清单）
+
+  // 5) 成功后计数
+  await incQuota(userId, today, 'menu');
+
+  return NextResponse.json(result);
+}
+
+
+ensureQuota/incQuota/buildMenuPrompt/callLLM 在 /lib 中实现。
+
+8) 计划→额度规则（统一在 /lib/quota.ts）
+export function planLimits(plan: 'free'|'plus'|'pro') {
+  return {
+    menuPerDay: plan === 'free' ? 0.33 : plan === 'plus' ? 3 : 9999,  // free: 每3天1次≈0.33/天
+    coachPerDay: plan === 'free' ? 0 : plan === 'plus' ? 3 : 9999
+  };
+}
+
+
+ensureQuota：读取 ai_usage_daily，与 planLimits(plan) 比较是否超额。
+
+incQuota：成功后 update ... set menu_used=menu_used+1。
+
+coach 路径同理。
+
+9) Feature Flags（/lib/featureFlags.ts + /app/admin/features）
+
+后台可勾选某功能对哪些计划可见（plan_visibility）。
+
+前台渲染前调用 /features 获取开关，未开放则隐藏按钮或置灰提示“Pro可用”。
+
+10) 审计日志（/lib/audit.ts + 后台操作统一写日志）
+
+任何后台敏感操作（赠送 Pro、封禁、重置额度、改 Flag）调用：
+
+export async function audit(actorId: string, action: string, target?: string, meta?: any) {
+  await supabaseAdmin.from('audit_log').insert({
+    actor: actorId, action, target, meta
+  });
+}
+
+
+后台 /admin/logs 显示最近 100 条。
+
+11) 后台页面（MVP 功能）
+
+/admin 仪表盘：注册总数、活跃订阅、今日AI调用、失败率、Top入口
+
+/admin/users：按邮箱/ID查 → 展示档案/订阅/AI用量/最近10条记录；按钮：赠送Pro7天、重置今日AI、封禁/解封
+
+/admin/subscriptions：列表与筛选（active/trialing/canceled）
+
+/admin/ai-usage：菜单&教练调用排行、异常/失败重试率
+
+/admin/features：勾选 plan_visibility，保存即生效
+
+/admin/content：推荐食物/提示文案热更新（简单表单）
+
+/admin/logs：审计日志表格
+
+UI 不求花哨；用 shadcn/ui 的表格、Card、Dialog 即可。
+
+12) 前台关键页面/动作
+
+/dashboard：两张图（热量、蛋白质趋势）+ 今日目标卡 + “生成今日三餐”按钮（按开关/配额显示）
+
+/records：食物/饮水记录表单，单位默认 lb/oz；支持保存模板；记录成功后 5 分钟触发一次 Coach 提示
+
+/ai-menu：展示返回的三餐与替换项；按钮“一键记录全天 / 保存为模板 / 换一套”
+
+/ai-coach：晚间分支（A 轻补 ≤150kcal；B 明早追上并自动并入明日菜单）；按钮联动
+
+/settings：单位切换（imperial/metric）、语言、饮食偏好、过敏黑名单
+
+13) AI Prompt（中英合规模板，放 /lib/ai.ts）
+
+AI菜单 Prompt（摘要版，占位符需后端填充）：
+
+System: You are a nutrition planner. Return strict JSON only.
+User:
+Goal macros (kcal/protein/fat/carb): {{...}}
+Remaining macros (if any): {{...}}
+Preferences: cuisine={{...}}, low-lactose={{...}}, budget={{...}}, kitchen={{true/false}}
+Allergies blacklist: {{...}}
+Unit: {{imperial|metric}}
+Rules:
+- Hit target within ±5% (protein priority).
+- 3 meals; if late day with remaining macros, allow 2 or 1 meals.
+- Each meal includes kcal, protein_g, fat_g, carb_g, items with qty, 2 swap options, prep_time_min.
+- Provide grocery_list weekly qty.
+- Output JSON {totals, meals[], grocery_list[], rationale}.
+
+
+AI教练 Prompt（晚间双路径）：
+
+System: You are a calm fitness coach. Short, actionable. No judgment.
+User:
+Now local time: {{21:45}}
+Today achieved: kcal {{...}}%, protein {{...}}% (missing {{x}} g protein)
+Stomach sensitive: {{true/false}}, Night snack allowed: {{true/false}}
+Hydration: {{...}} / target {{...}}
+Task:
+- Provide [Coach Summary] 1-2 lines.
+- Path A (optional light补): ≤150 kcal, ≤15g fat, ~10-15g protein.
+- Path B (recommended at late night): “Don’t补; fix at breakfast” with concrete breakfast add-ons (+20~30g protein).
+- Hydration nudge: 6–8 oz sip if low.
+- Mindset: 1 short sentence.
+Return JSON {summary, pathA, pathB, hydration, mindset}.
+
+14) 安全与合规
+
+后台路由 404 伪装；仅 SSR 读取 admin 数据（服务端用 Service Role Key）。
+
+RLS 所有用户表默认只允许本人行级访问；后台用服务端密钥或 admin 角色策略。
+
+OpenAI Key 仅服务器端使用；前端永不出现。
+
+后台加 TOTP 2FA（可放后续迭代）。
+
+隐私：历史数据与语言全开放；付费点放在分析/AI/自动化上。
+
+15) 部署自检清单
+
+✅ Stripe Webhook 验证通过（能写入/更新 subscriptions）
+
+✅ 新注册用户自动写入 profiles，默认 role='user'
+
+✅ ADMIN_ALLOWED_EMAILS 对应账号在 profiles.role=admin
+
+✅ /admin 未登录跳登录；非管理员访问 404
+
+✅ Free 用户 AI 菜单：每3天1次；Plus：每日3次；Pro：无限
+
+✅ 晚间 21:00 后 Coach 默认推荐 Path B（明早追上），A 为可选轻补
+
+✅ 单位系统：默认 lb/oz，切换后所有 UI 与计算同步
+
+✅ 多语言切换可用（至少中英）

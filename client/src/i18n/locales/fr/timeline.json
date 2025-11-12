@@ -1,0 +1,48 @@
+{
+  "title": "Chronologie",
+  "today": "Aujourd'hui",
+  "reminders": "Rappels",
+  "noReminders": "Aucun rappel pour aujourd'hui",
+  "addReminder": "Ajouter un rappel",
+  "editReminder": "Modifier le rappel",
+  "deleteReminder": "Supprimer le rappel",
+  "time": "Heure",
+  "status": {
+    "pending": "En attente",
+    "completed": "Terminé",
+    "overdue": "En retard",
+    "missed": "Manqué",
+    "postponed": "Reporté",
+    "skipped": "Ignoré"
+  },
+  "countdown": {
+    "remaining": "Restant",
+    "overdue": "En retard",
+    "hours": "{count}h",
+    "minutes": "{count}m"
+  },
+  "postpone": {
+    "title": "Reporter",
+    "min15": "+15 min",
+    "min30": "+30 min",
+    "min60": "+60 min"
+  },
+  "markCompleted": "Marquer comme terminé",
+  "scheduledTime": "Heure programmée",
+  "description": "Description",
+  "infoBanner": {
+    "title": "Le temps est un rythme, pas une contrainte",
+    "description": "Vous avez manqué un rappel ? Pas de souci ! Vous pouvez vous rattraper à tout moment. Nous nous concentrons sur votre nutrition quotidienne totale, et non sur des horaires stricts. Vos habitudes saines doivent être flexibles et durables : les rappels sont un guide doux, pas des exigences rigides."
+  },
+  "catchup": {
+    "button": "Rattraper",
+    "successTitle": "Enregistrement réussi",
+    "successDescription": "Ce rappel a été enregistré avec succès"
+  },
+  "actions": {
+    "complete": "Terminer",
+    "postpone": "Reporter",
+    "skip": "Ignorer",
+    "delete": "Supprimer"
+  }
+}

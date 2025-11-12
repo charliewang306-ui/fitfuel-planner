@@ -1,0 +1,170 @@
+二、两处核心补丁（前端 + 后端）
+A. 前端 fetch 防御 & 成功后再弹“已生成”
+
+把你调用 AI 的地方统一换成这个工具函数（只弹成功，错误能看明白）：
+
+// lib/safeFetch.ts
+export async function safeJsonFetch(url: string, options: RequestInit = {}) {
+  const res = await fetch(url, {
+    credentials: 'same-origin', // 确保带上同域Cookie
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options,
+  });
+
+  const text = await res.text();
+  const ct = res.headers.get('content-type') || '';
+
+  if (!ct.includes('application/json')) {
+    throw new Error(`HTTP ${res.status} (non-JSON): ${text.slice(0, 200)}`);
+  }
+
+  let data: any;
+  try { data = JSON.parse(text); } catch (e) {
+    throw new Error(`JSON parse error: ${String(e)} | body: ${text.slice(0, 200)}`);
+  }
+
+  if (!res.ok || data?.error) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+
+页面里这样用（先渲染，再提示成功；失败时给可读错误）：
+
+import { safeJsonFetch } from '@/lib/safeFetch';
+import { toast } from 'sonner'; // 或你自己的toast
+
+async function generateMenu(payload) {
+  try {
+    setLoading(true);
+    const data = await safeJsonFetch('/api/ai/menu', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    setPlan(data);                    // 渲染结果
+    localStorage.setItem('lastPlan', JSON.stringify(data)); // 兜底缓存
+    toast.success('今日三餐计划已生成'); // 成功后再弹
+  } catch (e:any) {
+    console.error(e);
+    toast.error(`生成失败：${e.message}`);
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+同理，晚间教练 /api/ai/coach 也用 safeJsonFetch。
+
+B. 后端统一保证「只返回 JSON」并写清错误码
+
+在 route.ts 里所有出口都用这种格式：
+
+// app/api/ai/menu/route.ts（示例）
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/auth';
+import { ensureQuota, incQuota } from '@/lib/quota';
+import { buildMenuPrompt, callLLM } from '@/lib/ai';
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const body = await req.json().catch(() => ({}));
+
+    // 限额
+    const ok = await ensureQuota(userId, new Date(), 'menu');
+    if (!ok) return NextResponse.json({ error: 'quota_exceeded' }, { status: 429 });
+
+    // 业务
+    const prompt = await buildMenuPrompt(userId, body);
+    const result = await callLLM(prompt);
+
+    await incQuota(userId, new Date(), 'menu');
+    return NextResponse.json(result, { status: 200 });
+  } catch (err:any) {
+    console.error('AI menu error:', err);
+    return NextResponse.json({ error: err.message || 'internal_error' }, { status: 500 });
+  }
+}
+
+
+这样无论成功/失败，前端都能拿到 JSON，不会再出现 <!DOCTYPE…> 被 JSON 解析的错误。
+
+三、你截图的三个现象，对应修复
+
+“下方提示已生成，上方无内容”
+
+触发原因：先弹了成功，再渲染；或者渲染时 plan 被覆盖/没有持久化
+
+修复：用上面的 safeJsonFetch，先 setPlan 再 toast；另外把结果 localStorage('lastPlan')，页面挂载时做回显：
+
+useEffect(() => {
+  const cached = localStorage.getItem('lastPlan');
+  if (cached && !plan) setPlan(JSON.parse(cached));
+}, []);
+
+
+晚间建议报错 Unexpected token '<'
+
+根因：返回了 HTML（常见是 401 未登录重定向到登录页、或调用了跨域地址）
+
+修复：同域相对路径 + 上述后端 JSON 化；如果你在服务端用绝对 APP_BASE_URL 调同源接口，确保指向同域，或改为相对路径。
+
+“输入问题，生成失败”
+
+看 Network 的 status；若 429 则是额度检查挡住；若 500 看后端日志。
+
+确保 OPENAI_API_KEY、Supabase 服务键、Stripe 环境变量都在 Replit/Vercel 正确配置；
+
+在 /api/ai/coach 也套用同样的 try/catch + JSON 错误返回。
+
+四、加一个「返回」按钮（你说没有返回）
+
+在 AI 页面顶部加导航：
+
+'use client';
+import { useRouter } from 'next/navigation';
+
+export default function PageHeader({ title }: { title: string }) {
+  const router = useRouter();
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <button
+        onClick={() => router.back()}
+        className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
+        aria-label="返回"
+      >
+        ← 返回
+      </button>
+      <h1 className="text-lg font-semibold">{title}</h1>
+    </div>
+  );
+}
+
+
+然后在 AI 三餐菜单、AI 智能教练页面顶部直接 <PageHeader title="AI三餐菜单" /> / "AI智能教练"。
+
+五、补一个 /api/ping 便于自检（可选）
+// app/api/ping/route.ts
+import { NextResponse } from 'next/server';
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
+}
+
+六、常见配置坑（逐条核对）
+
+ 页面调用 API 全部用相对路径（同域），不要写成 https://xxx.vercel.app/api/...
+
+ fetch 带 credentials: 'same-origin'
+
+ 后端任何失败都 NextResponse.json({error:'...'})，不要 redirect()
+
+ Plan/额度没配好：Free 用户菜单次数默认为 每3天1次，Plus 每日3次，Pro无限；超过返回 429 JSON
+
+ 生产环境 .env 已填：OPENAI_API_KEY / SUPABASE_SERVICE_ROLE_KEY / STRIPE_* / NEXT_PUBLIC_SUPABASE_*
+
+ Feature Flag 没关错：ai_menu、ai_coach 对应 plan 可见

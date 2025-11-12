@@ -1,0 +1,256 @@
+Water Intake — 目标与提醒一体化改造（英制优先）
+0) 目标
+
+默认日目标：体重(lb) × 0.6 = oz/天
+
+运动加成：每 30–60 分钟中高强度运动 +12～24 oz（按分钟线性估算）
+
+安全上限：≤ 32 oz / 小时（仅作“不要超过”的提示，不是建议量）
+
+动态分配：每次提醒建议量 = 当日剩余水量 ÷ 剩余提醒次数（四舍五入到 4oz 桶）
+
+晚间策略：距离睡前 ≤ 2h，减少当晚建议量（建议减半），提示“留到明早补”
+
+单位：主用 oz，可切换 ml（1 oz = 29.5735 ml）
+
+1) 新增常量与工具（src/lib/water.ts）
+// src/lib/water.ts
+export const OZ_PER_ML = 1 / 29.5735; // ml -> oz
+export const ML_PER_OZ = 29.5735;     // oz -> ml
+export const MAX_HOURLY_OZ = 32;      // 安全上限（不是建议量）
+export const ROUND_BUCKET_OZ = 4;     // 记录与建议的最小步进
+
+/** 默认日目标（英制）：体重(lb) * 0.6 = oz/day */
+export function defaultDailyTargetOz(weightLb: number): number {
+  return Math.max(40, Math.round(weightLb * 0.6)); // 至少40oz，避免过低
+}
+
+/** 运动加成（分钟 -> 额外oz），30~60min: +12~24oz 线性映射 */
+export function exerciseBonusOz(minutes: number): number {
+  if (!minutes || minutes <= 0) return 0;
+  const minBonus = 12; // 30min
+  const maxBonus = 24; // 60min
+  if (minutes <= 30) return minBonus * (minutes / 30);
+  if (minutes >= 60) return maxBonus + (minutes - 60) * 0.3; // >60逐步递增(可微调)
+  // 30~60线性过渡
+  const ratio = (minutes - 30) / 30;
+  return minBonus + (maxBonus - minBonus) * ratio;
+}
+
+/** 四舍五入到固定桶（如4oz） */
+export function roundToBucketOz(value: number, bucket = ROUND_BUCKET_OZ): number {
+  return Math.round(value / bucket) * bucket;
+}
+
+/** oz↔ml */
+export const toMl = (oz: number) => oz * ML_PER_OZ;
+export const toOz = (ml: number) => ml * OZ_PER_OZ;
+
+/** 晚间减量：默认减半，可传倍率 */
+export function eveningReduce(oz: number, factor = 0.5) {
+  return oz * factor;
+}
+
+/** 计算每次提醒建议量 */
+export function suggestPerReminderOz(remainingOz: number, remindersLeft: number, isLate: boolean) {
+  if (remindersLeft <= 0) return 0;
+  let base = remainingOz / remindersLeft;
+  if (isLate) base = eveningReduce(base); // 晚间降低
+  return Math.max(0, roundToBucketOz(base));
+}
+
+2) 计算接口（src/app/api/water/today/route.ts）
+
+输入用户体重/单位、今日已喝、今日运动分钟、剩余提醒次数、距离睡前（分钟）；返回“目标/建议/文案”。
+前端每次打开饮水页或设置改变时调用即可。
+
+// src/app/api/water/today/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { defaultDailyTargetOz, exerciseBonusOz, suggestPerReminderOz, MAX_HOURLY_OZ, toMl, toOz } from '@/lib/water';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const {
+      weight,               // number
+      unit = 'imperial',    // 'imperial' | 'metric'
+      drankToday = 0,       // 已喝（与unit一致）
+      exerciseMin = 0,      // 今日运动分钟
+      remindersLeft = 0,    // 剩余提醒次数
+      minutesToBed = 9999,  // 距睡前（分钟）
+      goalOverride = null,  // 手动目标（与unit一致，可为null）
+    } = body || {};
+
+    // 统一到 oz
+    const weightLb = unit === 'metric' ? (weight * 2.20462) : weight;
+    const drankOz   = unit === 'metric' ? toOz(drankToday) : drankToday;
+    const manualGoalOz = goalOverride != null
+      ? (unit === 'metric' ? toOz(goalOverride) : goalOverride)
+      : null;
+
+    const baseTargetOz = manualGoalOz ?? defaultDailyTargetOz(weightLb);
+    const bonusOz = exerciseBonusOz(exerciseMin);
+    const targetOz = Math.round(baseTargetOz + bonusOz);
+
+    const remainingOz = Math.max(0, targetOz - drankOz);
+    const isLate = minutesToBed <= 120;
+    const perReminderOz = suggestPerReminderOz(remainingOz, remindersLeft, isLate);
+
+    const res = {
+      unit,
+      target: unit === 'metric' ? Math.round(toMl(targetOz)) : targetOz,
+      drank:  unit === 'metric' ? Math.round(toMl(drankOz))  : Math.round(drankOz),
+      remaining: unit === 'metric' ? Math.max(0, Math.round(toMl(remainingOz))) : Math.max(0, Math.round(remainingOz)),
+      bonusFromExercise: unit === 'metric' ? Math.round(toMl(bonusOz)) : Math.round(bonusOz),
+      suggestPerReminder: unit === 'metric' ? Math.round(toMl(perReminderOz)) : perReminderOz,
+      maxHourly: unit === 'metric' ? Math.round(toMl(MAX_HOURLY_OZ)) : MAX_HOURLY_OZ,
+      flags: { isLate },
+      rationale: {
+        baseFormula: '目标=体重(lb)×0.6；可手动覆盖',
+        exerciseRule: '每30–60分钟 +12～24oz，线性估算',
+        lateNight: '睡前≤2h降低当晚建议量，留到明早补',
+        safety: '最大安全速度 ≤32oz/小时（不是建议量）',
+      }
+    };
+
+    return NextResponse.json(res);
+  } catch (e:any) {
+    return NextResponse.json({ error: e.message || 'internal_error' }, { status: 500 });
+  }
+}
+
+3) 前端建议区块组件（src/components/water/WaterGuidance.tsx）
+
+放在饮水页“目标/已喝/超额”下方。
+
+// src/components/water/WaterGuidance.tsx
+'use client';
+import React from 'react';
+
+type Props = {
+  unit: 'imperial' | 'metric';
+  target: number;
+  drank: number;
+  remaining: number;
+  bonusFromExercise: number;
+  suggestPerReminder: number;
+  maxHourly: number;
+  flags: { isLate: boolean };
+};
+
+export default function WaterGuidance(p: Props) {
+  const u = p.unit === 'metric' ? 'ml' : 'oz';
+
+  return (
+    <div className="mt-4 rounded-lg border p-4 bg-muted/30">
+      <div className="text-sm font-medium mb-2">今日建议（动态）</div>
+      <ul className="text-sm space-y-1">
+        <li>每次补水建议：<b>{p.suggestPerReminder}{u}</b>（≈ 剩余 ÷ 剩余提醒次数{p.flags.isLate ? '，晚间已降量' : ''}）</li>
+        <li>最大安全速度：<b>≤ {p.maxHourly}{u}/小时</b>（不要一次喝太多）</li>
+      </ul>
+
+      <div className="text-sm font-medium mt-3 mb-2">运动加成{p.bonusFromExercise > 0 ? '' : '（无）'}</div>
+      <ul className="text-sm space-y-1">
+        <li>今日额外建议：<b>{p.bonusFromExercise}{u}</b>（每30–60分钟 +12～24{u}，分次饮用）</li>
+      </ul>
+
+      <div className="text-sm font-medium mt-3 mb-2">晚间提醒</div>
+      <ul className="text-sm space-y-1">
+        <li>睡前 ≤ 2 小时：建议减少当晚饮水，留到明早补。</li>
+      </ul>
+    </div>
+  );
+}
+
+
+用法（在饮水页中）：
+
+// 伪代码：在页面加载时调用 /api/water/today 得到 data，然后：
+// <WaterGuidance {...data} />
+
+4) 饮水页调用接口（示例逻辑，粘到饮水页）
+
+把饮水页的目标/已喝/提醒次数/运动分钟传给 API，然后渲染 WaterGuidance。
+
+// 片段：放在你的 Water Intake 页面组件里
+import { useEffect, useState } from 'react';
+import WaterGuidance from '@/components/water/WaterGuidance';
+import { safeJsonFetch } from '@/lib/safeFetch'; // 之前我们加过
+
+type WaterTodayRes = {
+  unit: 'imperial'|'metric';
+  target: number; drank: number; remaining: number;
+  bonusFromExercise: number; suggestPerReminder: number; maxHourly: number;
+  flags: { isLate: boolean };
+  rationale: any;
+};
+
+export default function WaterPage() {
+  const [data, setData] = useState<WaterTodayRes | null>(null);
+  const unit: 'imperial'|'metric' = 'imperial';                 // 从用户设置取
+  const weight = 180;                                           // 从档案取（lb或kg）
+  const drankToday = 142.8;                                     // 今日已喝
+  const exerciseMin = 45;                                       // 今日运动分钟（有记录则填）
+  const remindersLeft = 4;                                      // 剩余提醒次数（根据提醒系统）
+  const minutesToBed = 180;                                     // 距睡前，设置中估算或手输
+  const goalOverride = null;                                    // 若用户自定义目标
+
+  useEffect(() => {
+    const payload = { unit, weight, drankToday, exerciseMin, remindersLeft, minutesToBed, goalOverride };
+    safeJsonFetch('/api/water/today', { method: 'POST', body: JSON.stringify(payload) })
+      .then(setData)
+      .catch(err => console.error('water/today error', err));
+  }, [unit, weight, drankToday, exerciseMin, remindersLeft, minutesToBed, goalOverride]);
+
+  return (
+    <div>
+      {/* 你的原有“今日已饮用/目标/超额”模块保留 */}
+      {data && <WaterGuidance {...data} />}
+      {/* Quick Add 区不变（+4/+8/+12/+16 oz） */}
+    </div>
+  );
+}
+
+5) 设置页新增项（文案即可，开发自然落地）
+
+饮水目标：
+
+ 按体重自动（体重×0.6）
+
+ 自定义目标（oz/ml）
+
+提醒分配：每天提醒次数（建议 6–10 次）
+
+睡前停止提醒：默认 2 小时
+
+运动后加成：根据今日运动自动增加目标（开/关）
+
+6) 页面文案（可直接贴在 WaterGuidance 旁或帮助提示）
+
+今日建议（动态）
+
+每次补水建议：≈ 剩余水量 ÷ 剩余提醒次数
+
+最大安全速度：≤ 32oz/小时（不要一次猛灌）
+
+运动加成
+
+每 30–60 分钟中高强度运动：+12～24oz（按分钟线性估算，分次饮用）
+
+晚间提醒
+
+距睡眠 ≤ 2 小时：建议减少当晚饮水，留到明早补
+
+说明：目标是指导值，不是硬性指标；结合口渴感与尿液颜色判断，避免一次大量饮水。
+
+7) 验收清单
+
+打开饮水页，能看到“今日建议（动态）/ 运动加成 / 晚间提醒”模块。
+
+改变“已喝/运动分钟/剩余提醒次数/距离睡前”，建议量会实时更新。
+
+Network 请求 /api/water/today 返回 JSON，Content-Type = application/json。
+
+ml 模式下数值自动换算（1 oz=29.5735 ml）。
+
+安全上限仅作提示，不触发强制限制。

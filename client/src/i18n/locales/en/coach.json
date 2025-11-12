@@ -1,0 +1,65 @@
+{
+  "page_title": "AI Smart Coach",
+  "page_subtitle": "Three-in-one smart coach: Nutrition · Workout · Mindset",
+  "page_description": "Make your next decision with today's real data",
+  "system_title": "Three-Module Coach System",
+  "system_description": "Automatically identifies question type and routes to professional coach module",
+  "modules": {
+    "nutrition": {
+      "name": "Nutrition Commander",
+      "description": "Precise macro nutrition advice, strict rules, no philosophy nonsense"
+    },
+    "workout": {
+      "name": "Training Cycle Coach",
+      "description": "Based on PPL cycle (Push→Pull→Legs), never consecutive same chain"
+    },
+    "mindset": {
+      "name": "Mindset Coach",
+      "description": "Strengthen adherence and discipline, short and powerful, 1-3 minute actions"
+    }
+  },
+  "training": {
+    "last_training": "Last training:",
+    "log_training": "Log Training",
+    "cancel": "Cancel",
+    "log_today": "Log Today's Training",
+    "training_type": "Training Type",
+    "notes_optional": "Notes (Optional)",
+    "notes_placeholder": "Record movements, weight, feelings...",
+    "saving": "Saving...",
+    "save_training": "Save Training Log",
+    "training_logged": "Training Logged",
+    "training_saved": "{{type}} training saved",
+    "log_failed": "Log Failed"
+  },
+  "ask": {
+    "title": "Ask Coach",
+    "quota_unlimited": "Unlimited conversations",
+    "quota_remaining": "{{remaining}}/{{limit}} remaining",
+    "description": "Ask anything: what to eat, what to train, mindset adjustment... system auto-routes",
+    "your_question": "Your Question",
+    "placeholder": "e.g., I have 500 kcal left for tonight, what should I eat? / What to train tomorrow? / I feel tired, want to give up...",
+    "ask_button": "Ask",
+    "thinking": "AI thinking..."
+  },
+  "upgrade": {
+    "title": "Upgrade to Premium",
+    "description": "Unlock three-in-one AI coach for comprehensive nutrition, training, and mindset guidance",
+    "button": "Upgrade Now"
+  },
+  "responses": {
+    "your_question": "Your question:"
+  },
+  "toasts": {
+    "conversation_success": "AI Coach Response",
+    "quota_consumed": "1 quota used, {{remaining}} remaining today",
+    "quota_warning": "⚠️ Conversations running out",
+    "quota_warning_desc": "{{remaining}} conversations left today",
+    "quota_exceeded": "💬 Daily conversations exhausted",
+    "quota_exceeded_full": "Daily conversations exhausted",
+    "generated": "Advice generated",
+    "generate_failed": "Generation failed",
+    "empty_question": "Please enter a question",
+    "empty_question_desc": "Please enter your question first"
+  }
+}

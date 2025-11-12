@@ -1,0 +1,70 @@
+{
+  "page_title": "AI Meal Menu",
+  "page_title_bulk": "AI Meal Menu--Bulking",
+  "page_title_cut": "AI Meal Menu--Cutting",
+  "page_title_maintain": "AI Meal Menu--Maintain",
+  "badge_tier": "Pro",
+  "generate_plan": "Generate Today's 3-Meal Plan",
+  "generating": "Generating...",
+  "plan": {
+    "today_recommendation": "Today's AI Recommendation",
+    "total": "Total:",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "applied": "Applied",
+    "regenerate": "Regenerate",
+    "snack_recommend": "AI Snack Recommendation",
+    "recommending": "Recommending..."
+  },
+  "meals": {
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner"
+  },
+  "nutrition": {
+    "divider": "Nutrition Recommendations",
+    "fill_remaining": "Remaining Nutrition Recommendations",
+    "remaining": "Remaining:",
+    "refresh": "Refresh",
+    "refresh_loading": "Generating...",
+    "click_to_generate": "Click the button above to generate today's supplement recommendations",
+    "rationale_prefix": "💡",
+    "tip_prefix": "✨"
+  },
+  "snacks": {
+    "title": "AI Snack Recommendations",
+    "goal": "Goal:",
+    "notes": "Notes:",
+    "why": "Why:",
+    "swaps": "Swaps:",
+    "click_to_generate": "Click the button above to generate AI snack recommendations"
+  },
+  "food": {
+    "add_to_log": "Add to Log",
+    "amount": "{{amount}}g"
+  },
+  "toasts": {
+    "plan_generated": "AI Menu Generated",
+    "plan_generated_desc": "Today's 3-meal plan generated!",
+    "generate_failed": "Generation Failed",
+    "plan_applied": "All Foods Logged",
+    "plan_applied_desc": "All foods from 3 meals added to today's log",
+    "apply_failed": "Log Failed",
+    "apply_failed_desc": "Unable to log foods",
+    "suggestions_updated": "Recommendations Updated",
+    "suggestions_updated_desc": "{{count}} food combinations recommended for you",
+    "suggestions_failed": "Failed to Get Recommendations",
+    "suggestions_failed_desc": "Unable to generate recommendations",
+    "suggestions_no_data": "Unable to get today's remaining nutrition data",
+    "snacks_generated": "AI Snack Recommendations Generated",
+    "snacks_generated_desc": "{{count}} snack options recommended for you",
+    "snacks_failed": "Failed to Get Snack Recommendations",
+    "snacks_failed_desc": "Unable to generate snack recommendations",
+    "food_logged": "Added to Log",
+    "food_logged_desc": "Food successfully logged to today's journal",
+    "food_log_failed": "Log Failed",
+    "food_log_failed_desc": "Unable to log food",
+    "invalid_amount": "Invalid amount"
+  }
+}

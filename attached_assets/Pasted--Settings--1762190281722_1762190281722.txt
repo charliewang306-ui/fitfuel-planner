@@ -1,0 +1,69 @@
+目标：根据用户的“就寝/起床时间”自动生成用餐时间表、夜间模式与提醒策略；在“睡前禁食窗口”内避免高热量推荐，仅保留轻蛋白小补；并在次日自动校正。
+
+一、设置项（Settings）
+新增并保存到用户配置：
+{
+  wakeTime: "07:00",           // 起床时间（本地时区）
+  sleepTime: "23:30",          // 睡觉时间
+  preSleepCutoffHours: 2.5,    // 睡前禁食窗口（小时，默认2.5，可选2~3）
+  nightModeBufferMin: 90,      // 距离睡觉还剩<=90分钟时，自动切入“晚间模式”
+  lastReminderBufferMin: 60,   // 睡前60分钟后不再推高热量餐提醒（保护睡眠）
+  allowLightProteinAfterCutoff: true,  // 禁食窗口内仅允许“轻蛋白小补”
+  autoRescheduleMeals: true,   // 自动顺延餐次以避开禁食窗口
+  minGapBetweenMealsMin: 120   // 两餐最小间隔（用于自动排布）
+}
+
+二、时间表生成（基于睡/起时间）
+1) 生成当天的“可进食总窗口”：[wakeTime, sleepTime - preSleepCutoffHours]
+2) 在该窗口内均匀布置：早餐、午餐、加餐、晚餐（和可选的加餐2），相邻餐至少间隔 minGapBetweenMealsMin。
+3) 若用户手动修改任一餐时间，校验不落入“禁食窗口”；落入则向前裁切或向后顺延，但不得越过 sleepTime - preSleepCutoffHours。
+
+伪代码：
+function buildMealPlan(wake, sleep, cutoffH, minGap) {
+  const eatEnd = subtractHours(sleep, cutoffH);
+  const window = [wake, eatEnd];
+  // 分配4-5餐（配置化），确保相邻>=minGap，优先保证早/午/晚固定，再插入加餐。
+  return slots; // [{id:'breakfast',start,end},...]
+}
+
+三、实时状态与模式切换
+定义：
+- cutoffStart = sleepTime - preSleepCutoffHours
+- nightModeStart = sleepTime - (nightModeBufferMin / 60)小时
+- lastReminderTime = sleepTime - (lastReminderBufferMin / 60)小时
+
+逻辑：
+- 当前时间 >= nightModeStart → UI切换“晚间模式”（仅显示：高蛋白、低脂、易消化，隐藏高脂/高糖/油炸/坚果/奶酪类）。
+- 当前时间 >= lastReminderTime → 取消/压低“吃饭提醒”，仅给被动建议。
+- 当前时间 >= cutoffStart → 禁食窗口：除非 allowLightProteinAfterCutoff=true 且用户明确操作，则仅允许“轻蛋白小补”（如蛋白粉兑水、无糖豆浆半杯、蛋清），并提示“剩余明日校正”。
+
+四、自动顺延与“错过餐次”处理
+- 若某餐被记录在其时间窗口之后（延迟）且仍在 eatEnd 之前：
+  - 若延迟 ≤ 60min：将后续餐各顺延 `snoozeMinutesDefault`（如 20min），但不能越过 eatEnd。
+  - 若延迟 > 60min 或当前时间 >= nightModeStart：不再顺延全部餐，只建议“晚间模式轻食”，剩余目标移至明日早餐/午餐“温和校正”。
+- 若晚餐被推到接近 cutoffStart（<30min缓冲），自动缩小晚餐推荐份量（scale 0.6~0.8），并标注“晚间轻食份”。
+
+五、推荐引擎与禁食窗口联动
+- 正常时段：按“补缺&纠偏”权重打分（蛋白优先/控碳/低脂/补纤维/补钙），参考 gap。
+- 夜间模式：过滤高脂/高糖/高纤维难消化食物，仅保留：
+  - 希腊酸奶（无糖/低脂小杯）、脱脂/低脂奶（小量）、蛋白粉+水、无糖豆浆、蛋清、少量白肉鱼/鸡胸（小份）。
+- 禁食窗口内（cutoffStart 之后）：
+  - 若 allowLightProteinAfterCutoff=false：不出任何可加餐，显示“建议休息，明日校正”。
+  - 若 true：只出“轻蛋白小补”清单，份量自动压缩（例如蛋白粉 10–20g）。
+
+六、Hydration与夜间
+- cutoffStart 之后仅允许不含热量饮品的补水提醒（白水/花草茶）；若用户选择牛奶/含能饮品，提示“已在禁食窗口，建议改白水或轻蛋白小补”。
+
+七、文案（中文）
+- 进入夜间模式时顶部提示：
+  “已接近休息时间：建议只补关键营养（优先蛋白，低脂易消化），其余留到明天早/午温和校正。”
+- 禁食窗口提示：
+  “已进入睡前禁食窗口。为了睡眠与代谢，不建议再进食。如有强烈饥饿，可选择‘轻蛋白小补’。”
+
+八、边界与例外
+- 夜班/昼夜颠倒：允许用户保存“工作班型”（白班/夜班/轮班），按所填 sleepTime/wakeTime 重建时间表即可，无需特殊分支。
+- 小睡（nap）：忽略，不改变当天进食窗口。
+- 断食模式（可选）：若启用 16:8 等，进食窗口 = 断食算法窗口 ∩ [wake, eatEnd]，其余同上。
+
+九、埋点
+- 记录 nightMode 命中率、禁食窗口内操作、轻蛋白小补选择率、次日校正完成率，用于优化默认权重与文案。

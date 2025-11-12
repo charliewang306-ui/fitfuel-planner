@@ -1,0 +1,178 @@
+指令：食物记录“纠错”全流程（编辑/删除/撤销 + 自动重算 + 建议刷新）
+1) UI 改动（页面与组件）
+
+在「今日时间线/日志」与「AI三餐菜单 > 每一餐卡片」的每条食物记录右侧，新增三个操作按钮：
+编辑｜删除｜改克数
+
+编辑：弹出对话框（字段：食物名、克数/份数、备注），点“保存”后调用 updateFoodLog()。
+
+改克数：弹出迷你输入（仅克数），保存后也走 updateFoodLog()。
+
+删除：调用 deleteFoodLog()。
+
+每次编辑/删除成功后，在底部弹 SnackBar：已更新｜撤销（持续 6–8 秒）。
+
+视觉：操作按钮使用浅灰描边，hover 变深；删除红色；撤销条使用浅绿色背景。
+
+2) 数据结构（如已存在可复用）
+
+记录模型：
+
+type FoodLog = {
+  id: string
+  date: string        // YYYY-MM-DD
+  mealType: 'breakfast'|'lunch'|'dinner'|'snack'
+  foodId: string
+  name: string
+  grams: number
+  macros: { P: number; C: number; F: number; fiber: number }
+  note?: string
+  createdAt: number
+  updatedAt: number
+}
+
+3) 统一计算入口（重算顺序）
+
+实现一个统一重算函数，所有编辑/删除/撤销后都调用：
+
+async function recomputeToday(date: string) {
+  // 1) 取出当天所有 FoodLog
+  const logs = await store.foodLogs.getByDate(date)
+
+  // 2) 汇总当天宏
+  const totals = sumLogs(logs) // {P,C,F,fiber, calories}
+
+  // 3) 更新「今日营养进度条」与「剩余宏」
+  store.today.setTotals(totals)
+  store.today.setRemainders(calcRemainders(totals, store.today.targets))
+
+  // 4) 触发“补足剩余营养”与“AI 零食推荐”刷新
+  triggerRegenSuggestions()
+}
+
+
+说明：sumLogs 为纯函数，calcRemainders 用 TDEE/目标 与 totals 计算 proteinLeft / carbsLeft / fatLeft / fiberLeft / hydrationLeft。
+
+4) API / 动作（编辑、删除、撤销）
+// 计算宏（后端或本地表）
+async function computeMacros(foodId: string, grams: number) {
+  // 若后端有接口，用接口；否则查本地营养表
+  return nutritionTable.calc(foodId, grams) // {P,C,F,fiber, calories}
+}
+
+// 编辑/改克数
+async function updateFoodLog(logId: string, patch: Partial<FoodLog>) {
+  const prev = await store.foodLogs.get(logId)
+  const next = { ...prev, ...patch }
+  if (patch.grams && patch.grams !== prev.grams) {
+    next.macros = await computeMacros(prev.foodId, patch.grams)
+  }
+  await store.foodLogs.update(logId, next)
+
+  // 乐观 UI：先更新列表
+  store.foodLogs.replace(logId, next)
+
+  // 记录撤销快照
+  pushUndo({
+    type: 'update',
+    date: prev.date,
+    before: prev,
+    after: next,
+  })
+
+  await recomputeToday(prev.date)
+  showSnack('已更新', { actionText: '撤销', onAction: undoLast })
+}
+
+// 删除
+async function deleteFoodLog(logId: string) {
+  const prev = await store.foodLogs.get(logId)
+  await store.foodLogs.remove(logId)
+  store.foodLogs.removeLocal(logId)
+
+  pushUndo({
+    type: 'delete',
+    date: prev.date,
+    before: prev,
+  })
+
+  await recomputeToday(prev.date)
+  showSnack('已删除', { actionText: '撤销', onAction: undoLast })
+}
+
+// 撤销
+async function undoLast() {
+  const item = popUndo()
+  if (!item) return
+  if (item.type === 'delete') {
+    await store.foodLogs.create(item.before)
+    store.foodLogs.addLocal(item.before)
+  } else if (item.type === 'update') {
+    await store.foodLogs.update(item.before.id, item.before)
+    store.foodLogs.replace(item.before.id, item.before)
+  }
+  await recomputeToday(item.date)
+  showSnack('已撤销')
+}
+
+5) “补足剩余营养”与“AI 零食推荐”刷新触发
+
+在 recomputeToday() 末尾调用 triggerRegenSuggestions()，按需自动或手动刷新：
+
+自动刷新（推荐）：当剩余宏发生变化时，直接触发生成；
+
+手动刷新：显示轻提示“数据已更新”，提供「重新生成」按钮。
+
+function triggerRegenSuggestions() {
+  const r = store.today.remainders
+  // Debounce 500ms，避免连续编辑时频繁请求
+  debounceGenerate({
+    proteinLeft: r.P,
+    carbsLeft: r.C,
+    fatLeft: r.F,
+    fiberLeft: r.fiber,
+    hydrationLeft: r.hydration,
+    goal: store.user.goal, // 'bulk'|'cut'|'maintain'
+  })
+}
+
+
+生成提示的 Prompt 模板（你原来那套即可；这里给一版兜底，避免“通用鸡汤”）：
+
+You are a nutritionist for {goal}. Use today’s remaining macros:
+
+- Protein Remaining: {proteinLeft} g
+- Carbs Remaining: {carbsLeft} g
+- Fat Remaining: {fatLeft} g
+- Fiber Remaining: {fiberLeft} g
+- Water Remaining: {hydrationLeft} oz
+
+Rules:
+- Only suggest foods that close the gap.
+- If carbsLeft < 0, do NOT suggest high-carb foods.
+- No generic motivation—give actionable grams and expected macros.
+Format:
+1) short rationale
+2) 2–3 foods with grams
+3) macro contribution per item
+
+6) 进度条与剩余宏绑定
+
+顶部“今日营养”进度条读取 store.today.totals，剩余读取 store.today.remainders；所有值由 recomputeToday() 写入，保证每次修改后自动同步。
+
+7) 验收标准（通过即上线）
+
+在任意页面（时间线或三餐卡片）
+① 编辑克数 → 进度条立刻变化 → 补足建议刷新；
+② 删除条目 → 进度条立刻变化 → 可撤销；
+③ 撤销后，一切回到改动前；
+④ 打开“补足剩余营养/AI 零食推荐”，内容基于最新剩余宏；
+⑤ 快速连续编辑同一条目时没有抖动/重复生成（有 debounce）。
+
+额外说明
+
+这套指令不会动你刚移除的“⼀键记录所有食物”按钮；
+
+若后端 API 名称不同，把 store.foodLogs.xxx 替换为你的数据层调用即可；
+
+如果当前已使用 LLM 生成模块，直接把「触发刷新」接到你现有的生成函数上（保持相同入参）。

@@ -1,0 +1,142 @@
+{
+  "pageTitle": "Today's Timeline",
+  "createButton": "New",
+  "professionalAdvice": {
+    "title": "Professional Advice",
+    "content": "Standard recommendation: Have a small snack about 2-3 hours between main meals to maintain a stable amino acid supply, which is more conducive to muscle synthesis."
+  },
+  "foodLogs": {
+    "title": "Today's Food Logs",
+    "count": "entries",
+    "empty": "No food logs yet",
+    "unknownFood": "Unknown Food",
+    "macros": {
+      "protein": "Protein",
+      "fat": "Fat",
+      "carbs": "Carbs",
+      "fiber": "Fiber"
+    },
+    "deleteConfirm": "Are you sure you want to delete this food log?"
+  },
+  "reminders": {
+    "title": "Today's Reminders",
+    "noReminders": "No reminders for today",
+    "missed": {
+      "title": "Missed this reminder",
+      "message": "No worries! You can catch up now or skip this one"
+    },
+    "snackRecommendations": "Recommended Combinations",
+    "scheduledAt": "Will remind at {time}",
+    "completedAt": "Completed at {time}",
+    "delayedUntil": "Postponed to {time}",
+    "skippedText": "Skipped"
+  },
+  "dialogs": {
+    "editReminder": {
+      "title": "Edit Reminder",
+      "description": "Modify reminder time and type",
+      "type": "Type",
+      "time": "Time"
+    },
+    "addReminder": {
+      "title": "Add Reminder",
+      "description": "Create a new time reminder"
+    },
+    "editFoodLog": {
+      "title": "Edit Food Log",
+      "description": "Modify food amount (g)",
+      "foodName": "Food Name",
+      "amount": "Amount (g)",
+      "notice": "Note: Nutritional values will be adjusted proportionally after amount change",
+      "invalidAmount": "Invalid Amount",
+      "invalidAmountDesc": "Please enter a valid amount (greater than 0)"
+    },
+    "snackRecommendations": {
+      "title": "Snack Recommendations",
+      "description": "Choose a suitable snack combination"
+    }
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "create": "Create",
+    "creating": "Creating...",
+    "close": "Close",
+    "skip": "Skip"
+  },
+  "toast": {
+    "updateFailed": "Update Failed",
+    "updateFailedDesc": "Failed to update reminder status",
+    "deleteSuccess": "Delete Success",
+    "reminderDeleted": "Reminder deleted",
+    "deleteFailed": "Delete Failed",
+    "reminderDeleteFailed": "Failed to delete reminder",
+    "createSuccess": "Create Success",
+    "reminderAdded": "New reminder added",
+    "createFailed": "Create Failed",
+    "reminderCreateFailed": "Failed to create reminder",
+    "editSuccess": "Edit Success",
+    "foodLogUpdated": "Food log updated",
+    "editFailed": "Edit Failed",
+    "foodLogUpdateFailed": "Failed to update food log",
+    "foodLogDeleted": "Food log deleted",
+    "foodLogDeleteFailed": "Failed to delete food log",
+    "postponed": "Postponed",
+    "reminderPostponed": "Reminder postponed",
+    "postponeFailed": "Postpone Failed",
+    "reminderPostponeFailed": "Failed to postpone reminder",
+    "skipped": "Skipped",
+    "reminderSkipped": "Reminder skipped",
+    "skipFailed": "Skip Failed",
+    "reminderSkipFailed": "Failed to skip reminder"
+  },
+  "status": {
+    "pending": "Pending",
+    "completed": "Completed",
+    "countdown": "In Progress",
+    "delayed": "Postponed",
+    "postponed": "Postponed",
+    "missed": "Missed",
+    "skipped": "Skipped"
+  },
+  "countdown": {
+    "remaining": "Remaining",
+    "overdue": "Overdue",
+    "formatHours": "{hours}h {minutes}m",
+    "formatMinutes": "{minutes}m"
+  },
+  "postpone": {
+    "min15": "+15 min",
+    "min30": "+30 min",
+    "min60": "+60 min"
+  },
+  "infoBanner": {
+    "title": "Time is rhythm, not constraint",
+    "description": "Missed a reminder? No worries! You can catch up anytime. We focus on your total daily nutrition, not strict timing. Your healthy habits should be flexible and sustainable—reminders are gentle guidance, not rigid requirements."
+  },
+  "flexibility": {
+    "badge": "Flexibility Window",
+    "window_open": "Window Open (early completion)",
+    "window_active": "Within Window",
+    "window_closing": "Window Closing Soon",
+    "window_closed": "Window Closed",
+    "early_window": "{minutes} min early window",
+    "late_window": "{minutes} min remaining",
+    "description": "±90min Flexibility Window (Plus): Complete 90 minutes before or after scheduled time"
+  },
+  "reminder_types": {
+    "meal": "Meal",
+    "snack": "Snack",
+    "water": "Water Reminder",
+    "pre_workout": "Pre-Workout",
+    "post_workout": "Post-Workout",
+    "ai_morning": "AI Morning Advice",
+    "ai_evening": "AI Evening Advice"
+  },
+  "ai_reminders": {
+    "view_advice": "View Advice",
+    "catchup": "Log Now",
+    "complete": "Complete"
+  }
+}

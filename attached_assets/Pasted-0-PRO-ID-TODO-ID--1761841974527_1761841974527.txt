@@ -1,0 +1,265 @@
+0. 基线与约束
+
+不破坏现有数据；保持当前页面结构（看板/饮水/记录/时间轴/设置/解锁 PRO）导航不变。
+
+若遇到缺失变量/ID，请创建占位并用明显注释（// TODO: 填入真实 ID）。
+
+全部文案双语（中文简体 zh-CN / 英文 en），i18n 结构可继续扩展（预留 es）。
+
+环境变量（新增 & 统一命名）
+
+TESTING_VITE_STRIPE_PUBLIC_KEY=pk_test_xxx
+
+TESTING_STRIPE_SECRET_KEY=sk_test_xxx
+
+VITE_PRICE_PLUS_MONTHLY=price_test_plus_m
+
+VITE_PRICE_PLUS_YEARLY=price_test_plus_y
+
+VITE_PRICE_PRO_MONTHLY=price_test_pro_m
+
+VITE_PRICE_PRO_YEARLY=price_test_pro_y
+
+USDA_API_KEY=<你的 FoodData Central API Key>（无则留空，自动降级为手动录入）
+
+保持已有的“7天免费试用，之后 $9.99/月”的 PRO 方案，但引入 Plus 中档（$4.99/月）用来提高转化（只在 UI 与 gating 上处理，结算走 Stripe price id）。
+
+1) 定价分层与 PRO 锁定（Free / Plus / Pro）
+1.1 计划与映射
+
+新增文件 src/pricing/plans.ts：
+
+export type Plan = 'free' | 'plus' | 'pro';
+
+export const PRICES = {
+  plus: {
+    monthly: import.meta.env.VITE_PRICE_PLUS_MONTHLY,
+    yearly: import.meta.env.VITE_PRICE_PLUS_YEARLY,
+  },
+  pro: {
+    monthly: import.meta.env.VITE_PRICE_PRO_MONTHLY,
+    yearly: import.meta.env.VITE_PRICE_PRO_YEARLY,
+  },
+};
+
+export const FEATURES = {
+  free: [
+    'hydration_tracking',
+    'manual_food_entry',
+    'maintain_mode_only',
+  ],
+  plus: [
+    'all_goal_modes',          // 增肌/减脂/维持
+    'timeline_reminders',
+    'protein_powder_module',   // 蛋白粉管理
+    'weekly_summary',          // 每周汇总
+    'i18n_switcher',
+  ],
+  pro: [
+    'barcode_scan',
+    'usda_food_db',
+    'ai_nutrition_coach',
+    'cloud_sync',
+    'data_export_pdf',
+    'themes_premium',
+  ],
+};
+
+
+新增 helper src/pricing/gating.ts：
+
+import { FEATURES } from './plans';
+
+export function hasFeature(plan: 'free'|'plus'|'pro', feature: string) {
+  const all = new Set([...FEATURES.free, ...(FEATURES.plus||[]), ...(FEATURES.pro||[])]);
+  if (!all.has(feature)) return false;
+  if (plan === 'pro') return true;
+  if (plan === 'plus') return [...FEATURES.free, ...FEATURES.plus].includes(feature);
+  return FEATURES.free.includes(feature);
+}
+
+1.2 UI：升级页（对比表 + 试用）
+
+改造现有“解锁 PRO”页面为 “升级 FitMeal”：展示 Free / Plus / Pro 三栏对比（图标 + 打勾/叉），按钮：
+
+Free：已当前计划
+
+Plus：开始 7 天试用（若不做 Plus 试用，则“立即升级 Plus”）
+
+Pro：开始 7 天试用
+
+价格：$4.99/月 或 $29.99/年（Plus）、$9.99/月 或 $79.99/年（Pro），可在 UI 中读取 env 占位。
+
+已有按钮文案继续保留（中文主文案 + 英文副文案），并支持 i18n。
+
+1.3 页面内 paywall
+
+在需要 PRO/Plus 功能的入口（如“AI营养建议”、“扫码录入”、“查看完整历史”、“完整食库”按钮）处，若 !hasFeature(activePlan, 'xxx')，弹 Paywall Modal：展示该功能亮点与按钮“升级 PRO / 升级 Plus”。
+
+Modal 组件放 src/components/paywall/PaywallModal.tsx。
+
+1.4 Stripe 测试
+
+使用 TESTING_VITE_STRIPE_PUBLIC_KEY 与 TESTING_STRIPE_SECRET_KEY，前端初始化 Checkout（测试模式）。
+
+在“升级页”和 Paywall 中调用 checkout(plan, period)，period ∈ monthly|yearly。
+
+所有 priceId 来自 env：VITE_PRICE_*。
+
+保留你现有的测试命名（Agent 之前提示的 TESTING_* 前缀）。
+
+2) 首页营养指引（含“每磅体重建议”白话提示）
+
+在首页 目标卡片 顶部区域增加一行“白话指南”（支持 i18n）：
+
+增肌（Muscle Gain）：蛋白质 0.8–1.0 g/磅体重/天；热量 TDEE + 200~300 kcal；脂肪 0.35 g/磅；碳水= 剩余热量/4
+
+减脂（Fat Loss）：蛋白质 1.0–1.2 g/磅体重/天（防肌流失）；热量 TDEE − 300~500 kcal；脂肪 0.35 g/磅；碳水= 剩余热量/4
+
+维持（Maintain）：蛋白质 0.7–0.9 g/磅/天；热量 ≈ TDEE；脂肪 0.35 g/磅；碳水= 剩余热量/4
+
+饮水：体重(磅) × 0.6 = 盎司/天（可随活动/气候微调）
+
+将这4条按当前选择的模式，在卡片上对应高亮；旁边保留“查看公式”小链接，展开显示你已实现的公式明细。
+
+3) 时间轴逻辑（现实化：软提醒、错过可补记）
+3.1 过期显示规则
+
+仅显示“今天”的提醒项。过了当天零点自动归档/清空（不累积红条）。
+
+每个提醒项有窗口：提醒时间 ±90 分钟。窗口外显示为“已错过”，提供按钮：
+
+记录（立即补记）
+
+跳过
+
+推迟 +15/+30/+60 分钟
+
+设置页新增说明文本（中文/英文）：
+
+“饮食时间是帮助分配营养吸收节奏的工具，并非硬性要求。错过也可以补记。”
+
+3.2 新建提醒组件
+
+时间轴列表项右上 … → “复制到明天/工作日批量应用/删除”。
+
+设置开关：是否启用震动/系统通知（保持你现在的开关位置与样式）。
+
+4) 饮水页默认剂量 + 动画优化
+
+页面顶部“水瓶”高度与当日目标联动（你已有），补充：默认快速按钮 +8oz / +12oz / +16oz 不再写死：
+
+规则：根据目标 dailyHydrationTargetOz 生成：round(target * 0.08), 0.12, 0.16，并四舍五入到最接近 2oz；不足时回退到 8/12/16。
+
+支持 oz/ml 切换（你已有），保留自定义输入。
+
+水位变更动画：瓶内液面使用 clip-path + requestAnimationFrame 简单波浪过渡，时长 600ms。
+
+5) 蛋白粉录入 + 食品库/条码（USDA）集成
+5.1 模块入口
+
+在 记录 → 蛋白质类 列表顶部增加 “蛋白粉”固定卡：
+
+默认含 3 个示例品牌（Whey 25g/勺，Casein 24g/勺，Isolate 27g/勺），用户可增删品牌、设置“每勺克数”“每勺蛋白克数”“每勺热量（可选）”。
+
+录入时可选：1勺/1.5勺/2勺，自由输入也可。
+
+5.2 条码与食品库（PRO）
+
+若 USDA_API_KEY 存在且 plan=pro：
+
+打开“扫码/搜索食物”按钮，搜索走 FoodData Central：
+
+关键词：返回食品对象中 label → nutrients（蛋白/脂肪/碳水/热量/份量）。
+
+条码扫描（若你已有摄像头权限按钮）：先查本地映射，未命中再查 FDC 的 Branded Foods（若查不到给出手动录入 fallback）。
+
+若无 key 或 plan 不允许：按钮仍显示，但触发 Paywall Modal。
+
+6) i18n 国际化与语言开关
+
+全局放置语言切换器（设置页顶部 + 右上角 Theme 旁），支持：中文(简体) zh-CN、English en（预留 Español es）。
+
+语言来源优先级：用户手动选择 > 浏览器/系统语言 > 默认中文。
+
+所有新增文案加入资源文件：/src/i18n/locales/zh-CN.json, en.json。
+
+对“升级页/Paywall/时间轴说明/首页白话指引/饮水提示/按钮文本”全部加多语言键。
+
+7) 简易周报与趋势图（Plus 起）
+
+在首页下方新增卡片 “本周趋势（Plus）”：
+
+折线图：本周每日摄入热量 vs 目标热量；柱状条：蛋白累计对比；
+
+组件：直接用 recharts（若项目已装）或原生 canvas 简单实现；
+
+Free 仅显示“升级 Plus 解锁趋势图”；Plus/Pro 正常显示。
+
+8) 视觉/UI 小升级（不改结构）
+
+进度条统一：圆角 rounded-2xl、阴影 shadow-sm，色板加强（主绿、暖橙、湖蓝、薰衣草紫、灰蓝）；
+
+看板顶部“目标卡片”加入 模式 pill（增肌/减脂/维持），同色系渐变背景；
+
+Paywall modal 采用“对勾清单 + 价值一句话 + CTA 按钮 + 小字试用说明”。
+
+9) 文案（中英，放入 i18n）
+
+时间轴说明（settings.help.mealTiming）
+
+zh-CN：饮食时间的意义在于「帮助分配营养吸收节奏」，不是硬性要求——错过时间也可以补记或跳过。
+
+en：Meal times help pace your nutrition. They are not rigid rules—if you miss a time window, you can log later or skip.
+
+首页白话指南（dashboard.tips）（按模式切换显示）
+
+增肌 zh-CN：蛋白 0.8–1.0 克/磅/天；热量≈TDEE+200~300；脂肪 0.35 克/磅；碳水=剩余热量÷4。
+
+增肌 en：Protein 0.8–1.0 g per lb/day; Calories ≈ TDEE + 200–300; Fat 0.35 g/lb; Carbs = leftover calories ÷ 4.
+
+减脂 zh-CN：蛋白 1.0–1.2 克/磅/天；热量≈TDEE−300~500；脂肪 0.35 克/磅；碳水=剩余热量÷4。
+
+减脂 en：Protein 1.0–1.2 g per lb/day; Calories ≈ TDEE − 300–500; Fat 0.35 g/lb; Carbs = leftover calories ÷ 4.
+
+维持 zh-CN：蛋白 0.7–0.9 克/磅/天；热量≈TDEE；脂肪 0.35 克/磅；碳水=剩余热量÷4。
+
+维持 en：Protein 0.7–0.9 g per lb/day; Calories ≈ TDEE; Fat 0.35 g/lb; Carbs = leftover calories ÷ 4.
+
+饮水 zh-CN：饮水目标≈体重(磅)×0.6（单位：盎司），可随出汗/气候调整。
+
+饮水 en：Hydration ≈ bodyweight(lb) × 0.6 (oz); adjust for heat and sweat.
+
+Paywall 亮点（paywall.points）
+
+扫码录入更快、AI 给你当天怎么吃、跨设备同步、周报洞察、导出 PDF 报告。
+
+🔟 QA / 验收标准
+
+定价 gating：
+
+Free 无法打开扫码/完整食库/AI顾问/历史完整/导出；点击弹 Paywall。
+
+Plus 可用：增肌/减脂模式、时间轴提醒、蛋白粉模块、周报图、语言切换。
+
+Pro 额外可用：扫码与 USDA 搜索、AI 顾问、云同步、导出。
+
+时间轴：只显示当日，过期显示“已错过”；可补记/跳过/推迟；次日不再堆积红条。
+
+饮水：默认快速按钮随目标自动计算（且保留 8/12/16 回退）；动画正常。
+
+首页：显示白话指南；模式切换文案随之变更。
+
+i18n：设置页和右上角均可切换中英；刷新后保持记忆（localStorage）。
+
+USDA：有 USDA_API_KEY + Pro 计划时，搜索/扫码能返回基础营养；无 key 或非 Pro 弹 Paywall。
+
+升级页：三栏对比、按钮有效，能进入 Stripe 测试结账（使用测试 price id）。
+
+11) 失败回退与日志
+
+重要逻辑点加 console.warn，发生异常优雅降级（比如没有 USDA key 时隐藏搜索入口，或只显示手动录入）。
+
+保留一个“实验开关”VITE_EXPERIMENTAL_UI=1，若置 0 则不启用趋势图和新配色（便于 A/B 和回退）。
+
+到此为止，请一次性完成以上所有改动。如果任何 env/price id 缺失，请创建明显占位并在终端输出需要我补充的变量名列表。

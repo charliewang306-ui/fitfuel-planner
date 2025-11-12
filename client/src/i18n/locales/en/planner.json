@@ -1,0 +1,35 @@
+{
+  "title": "AI Meal Planner",
+  "subtitle": "Generate personalized 3-meal daily plans based on your nutrition targets and current intake",
+  "generate": "Generate Plan",
+  "generating": "Generating...",
+  "regenerate": "Generate Alternative",
+  "logAll": "Log All Meals",
+  "logging": "Logging...",
+  "breakfast": "Breakfast",
+  "lunch": "Lunch",
+  "dinner": "Dinner",
+  "nutritionSummary": "Nutrition Summary",
+  "calories": "Calories",
+  "protein": "Protein",
+  "carbs": "Carbs",
+  "fat": "Fat",
+  "fiber": "Fiber",
+  "kcal": "kcal",
+  "noMealPlan": "Click 'Generate Plan' to get your personalized 3-meal daily plan",
+  "error": {
+    "generate": "Failed to generate meal plan. Please try again later",
+    "log": "Failed to log meals. Please try again later",
+    "quotaExceeded": "Monthly AI meal plan quota exceeded",
+    "upgrade": "Upgrade to Plus or Pro to use AI Meal Planner"
+  },
+  "success": {
+    "logged": "All meals logged successfully"
+  },
+  "features": {
+    "free": "Not available for free users",
+    "plus": "Plus: 10 plans/month",
+    "pro": "Pro: 30 plans/month"
+  },
+  "remainingQuota": "{count} plans remaining this month"
+}

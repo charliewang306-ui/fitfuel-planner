@@ -1,0 +1,91 @@
+{
+  "app": {
+    "name": "FitFuel Planner",
+    "tagline": "Intelligenter Ernährungs- und Hydrations-Manager"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "confirm": "Bestätigen",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "per100g": "pro 100g",
+    "serving": "Portion",
+    "grams": "Gramm",
+    "oz": "oz",
+    "ml": "ml",
+    "kcal": "kcal",
+    "scoop": "Messlöffel",
+    "scoops": "Messlöffel"
+  },
+  "nutrition": {
+    "protein": "Protein",
+    "fat": "Fett",
+    "carbs": "Kohlenhydrate",
+    "fiber": "Ballaststoffe",
+    "water": "Wasser",
+    "calories": "Kalorien",
+    "macros": "Makros"
+  },
+  "nutrients": {
+    "protein": "Protein",
+    "fat": "Fett",
+    "carbs": "Kohlenhydrate",
+    "fiber": "Ballaststoffe",
+    "water": "Wasser",
+    "calories": "Kalorien",
+    "macros": "Makros"
+  },
+  "goals": {
+    "bulk": "Aufbau (Muskelzunahme)",
+    "maintain": "Halten",
+    "cut": "Definitionsphase (Fettabbau)"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "log": "Erfassen",
+    "timeline": "Zeitstrahl",
+    "water": "Wasser",
+    "settings": "Einstellungen"
+  },
+  "subscription": {
+    "free": "Kostenlos",
+    "plus": "Premium",
+    "pro": "PRO"
+  },
+  "upgradePlus": "Auf Plus upgraden",
+  "upgradePro": "Auf PRO upgraden",
+  "features": {
+    "goal_cut": "Definitionsmodus (Fettabbau)",
+    "goal_bulk": "Aufbaumodus (Muskelaufbau)",
+    "custom_macros": "Benutzerdefinierte Makro-Ziele",
+    "timeline_unlimited": "Unbegrenzte Zeitstrahl-Ereignisse",
+    "timeline_edit": "Zeitstrahl-Ereignisse Bearbeiten",
+    "timeline_advance_notice": "Vorankündigungserinnerungen",
+    "barcode_scan": "Barcode-Scannen",
+    "usda_search": "USDA-Lebensmitteldatenbank",
+    "usda_unlimited": "Unbegrenzte USDA-Suchen",
+    "protein_powder": "Proteinpulver-Verfolgung",
+    "ai_coach": "KI-Ernährungscoach",
+    "ai_unlimited": "Unbegrenzte KI-Vorschläge",
+    "smart_suggestions": "Intelligente Mahlzeitenvorschläge",
+    "history_unlimited": "Unbegrenzter Verlauf",
+    "weekly_stats": "Wöchentliche Statistiken",
+    "export_pdf": "Als PDF Exportieren",
+    "cloud_sync": "Cloud-Synchronisierung",
+    "water_history": "Wasserverlauf",
+    "themes": "Benutzerdefinierte Themes",
+    "multi_language": "Mehrsprachige Unterstützung",
+    "no_ads": "Werbefreies Erlebnis"
+  },
+  "paywall": {
+    "requiresPlan": "Diese Funktion erfordert den {{plan}}-Plan",
+    "unlockFeatures": "{{plan}}-Funktionen Freischalten",
+    "proPricing": "7 Tage kostenlos testen • 9,99 $/Monat",
+    "plusPricing": "4,99 $/Monat"
+  }
+}

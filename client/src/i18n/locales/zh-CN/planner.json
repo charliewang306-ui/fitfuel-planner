@@ -1,0 +1,35 @@
+{
+  "title": "AI智能菜单",
+  "subtitle": "根据您的营养目标和当前摄入，为您生成个性化的一日三餐计划",
+  "generate": "生成菜单",
+  "generating": "生成中...",
+  "regenerate": "生成新方案",
+  "logAll": "一键记录全部",
+  "logging": "记录中...",
+  "breakfast": "早餐",
+  "lunch": "午餐",
+  "dinner": "晚餐",
+  "nutritionSummary": "营养总计",
+  "calories": "热量",
+  "protein": "蛋白质",
+  "carbs": "碳水",
+  "fat": "脂肪",
+  "fiber": "纤维",
+  "kcal": "千卡",
+  "noMealPlan": "点击「生成菜单」获取个性化的一日三餐计划",
+  "error": {
+    "generate": "生成菜单失败，请稍后重试",
+    "log": "记录失败，请稍后重试",
+    "quotaExceeded": "本月AI菜单生成次数已用完",
+    "upgrade": "升级到Plus或Pro以使用AI菜单功能"
+  },
+  "success": {
+    "logged": "已成功记录所有餐食"
+  },
+  "features": {
+    "free": "免费用户无法使用",
+    "plus": "Plus用户：每月10次",
+    "pro": "Pro用户：每月30次"
+  },
+  "remainingQuota": "本月剩余 {count} 次"
+}

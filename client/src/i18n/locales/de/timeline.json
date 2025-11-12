@@ -1,0 +1,48 @@
+{
+  "title": "Zeitstrahl",
+  "today": "Heute",
+  "reminders": "Erinnerungen",
+  "noReminders": "Keine Erinnerungen für heute",
+  "addReminder": "Erinnerung hinzufügen",
+  "editReminder": "Erinnerung bearbeiten",
+  "deleteReminder": "Erinnerung löschen",
+  "time": "Uhrzeit",
+  "status": {
+    "pending": "Ausstehend",
+    "completed": "Abgeschlossen",
+    "overdue": "Überfällig",
+    "missed": "Verpasst",
+    "postponed": "Verschoben",
+    "skipped": "Übersprungen"
+  },
+  "countdown": {
+    "remaining": "Verbleibend",
+    "overdue": "Überfällig",
+    "hours": "{count}h",
+    "minutes": "{count}m"
+  },
+  "postpone": {
+    "title": "Verschieben",
+    "min15": "+15 min",
+    "min30": "+30 min",
+    "min60": "+60 min"
+  },
+  "markCompleted": "Als abgeschlossen markieren",
+  "scheduledTime": "Geplante Uhrzeit",
+  "description": "Beschreibung",
+  "infoBanner": {
+    "title": "Zeit ist Rhythmus, keine Einschränkung",
+    "description": "Eine Erinnerung verpasst? Keine Sorge! Sie können jederzeit nachholen. Wir konzentrieren uns auf Ihre tägliche Gesamternährung, nicht auf strikte Zeitpläne. Ihre gesunden Gewohnheiten sollten flexibel und nachhaltig sein – Erinnerungen sind sanfte Orientierungshilfen, keine starren Anforderungen."
+  },
+  "catchup": {
+    "button": "Nachholen",
+    "successTitle": "Erfolgreich nachgeholt",
+    "successDescription": "Diese Erinnerung wurde erfolgreich protokolliert"
+  },
+  "actions": {
+    "complete": "Abschließen",
+    "postpone": "Verschieben",
+    "skip": "Überspringen",
+    "delete": "Löschen"
+  }
+}
