@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /login
+Disallow: /dashboard
+Disallow: /auth/
+Allow: /
+
+Sitemap: https://fit-fuel-planner-nine.vercel.app/sitemap.xml
