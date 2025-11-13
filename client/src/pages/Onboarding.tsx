@@ -21,7 +21,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabaseClient"; // ⬅️ 关键：导入 supabase 客户端
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
@@ -41,10 +41,8 @@ export default function Onboarding() {
 
   const progress = (step / 3) * 100;
 
-  // 保存 profile：改成直接写 Supabase
   const saveProfileMutation = useMutation({
     mutationFn: async (data: any) => {
-      // 1. 获取当前登录用户
       const {
         data: { user },
         error: userError,
@@ -54,22 +52,21 @@ export default function Onboarding() {
         throw userError ?? new Error("No user");
       }
 
-      // 2. 写入 / 更新 Supabase 中的 profiles 表
       const { error } = await supabase
-        .from("profiles") // ⬅️ 这里用你真实的表名
+        .from("user_profile")        // ⬅️ 只用这个表名！
         .upsert({
-          // 如果你的表里主键叫 user_id，就改成 user_id: user.id
-          id: user.id,
-          weightLb: data.weightLb,
-          heightCm: data.heightCm,
+          // 注意：我们用 user_id 关联用户，id(int8) 自己增
+          user_id: user.id,
+          weight_lb: data.weightLb,
+          height_cm: data.heightCm,
           age: data.age,
           sex: data.sex,
           goal: data.goal,
           activity: data.activity,
-          wakeTime: data.wakeTime,
-          sleepTime: data.sleepTime,
-          unitPref: data.unitPref,
-          decimalPlaces: data.decimalPlaces,
+          wake_time: data.wakeTime,
+          sleep_time: data.sleepTime,
+          unit_pref: data.unitPref,
+          decimal_places: data.decimalPlaces,
           updated_at: new Date().toISOString(),
         });
 
@@ -79,9 +76,7 @@ export default function Onboarding() {
       }
     },
     onSuccess: () => {
-      // 标记引导完成
       localStorage.setItem("onboarding_complete", "true");
-      // 刷新首页
       window.location.href = "/";
     },
     onError: () => {
@@ -97,7 +92,6 @@ export default function Onboarding() {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      // 最后一步，校验 + 保存
       const weightValue = parseFloat(formData.weightLb);
       const heightValue =
         formData.heightUnit === "in"
@@ -155,7 +149,6 @@ export default function Onboarding() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
       <header className="px-4 py-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
@@ -172,9 +165,7 @@ export default function Onboarding() {
         <p className="text-xs text-muted-foreground mt-2">步骤 {step} / 3</p>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 px-4 pb-6">
-        {/* Step 1: Weight & Goal */}
         {step === 1 && (
           <Card>
             <CardHeader>
@@ -331,7 +322,6 @@ export default function Onboarding() {
                 </Select>
               </div>
 
-              {/* Goal Description Card */}
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-foreground">
                   {formData.goal === "cut" &&
@@ -346,14 +336,11 @@ export default function Onboarding() {
           </Card>
         )}
 
-        {/* Step 2: Activity Level */}
         {step === 2 && (
           <Card>
             <CardHeader>
               <CardTitle>活动水平</CardTitle>
-              <CardDescription>
-                选择最符合你日常活动量的选项
-              </CardDescription>
+              <CardDescription>选择最符合你日常活动量的选项</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -371,9 +358,7 @@ export default function Onboarding() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sedentary">
-                      久坐 - 几乎不运动
-                    </SelectItem>
+                    <SelectItem value="sedentary">久坐 - 几乎不运动</SelectItem>
                     <SelectItem value="light">
                       轻度活动 - 每周1-3天运动
                     </SelectItem>
@@ -399,7 +384,6 @@ export default function Onboarding() {
           </Card>
         )}
 
-        {/* Step 3: Schedule */}
         {step === 3 && (
           <Card>
             <CardHeader>
@@ -448,7 +432,6 @@ export default function Onboarding() {
         )}
       </main>
 
-      {/* Footer Buttons */}
       <footer className="sticky bottom-0 bg-background border-t border-border px-4 py-4 space-y-2">
         <Button
           className="w-full h-12"
@@ -487,3 +470,4 @@ export default function Onboarding() {
     </div>
   );
 }
+  
