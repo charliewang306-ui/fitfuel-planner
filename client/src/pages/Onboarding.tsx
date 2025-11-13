@@ -53,7 +53,7 @@ export default function Onboarding() {
       }
 
       const { error } = await supabase
-        .from("user_profile")        // ⬅️ 只用这个表名！
+        .from("user_profiles")        // ⬅️ 只用这个表名！
         .upsert({
           // 注意：我们用 user_id 关联用户，id(int8) 自己增
           user_id: user.id,
